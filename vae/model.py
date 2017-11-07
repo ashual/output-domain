@@ -35,3 +35,7 @@ class VAE(nn.Module):
         mu, logvar = self.encode(x.view(-1, 784))
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar
+
+    def encoder_only(self, x):
+        mu, _ = self.encode(x.view(-1, 784))
+        return mu
