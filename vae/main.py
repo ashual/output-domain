@@ -1,18 +1,21 @@
 from __future__ import print_function
 
+import os.path
+
 import torch
 import torch.utils.data
 from torch import optim
 from torch.autograd import Variable
 from torch.nn import functional as F
+
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
-
 from vae.model import VAE
 from vae.options import load_arguments
 
-# DATA = 'MNIST'
-DATA = 'FashionMNIST'
+DATA = 'MNIST'
+# DATA = 'FashionMNIST'
+SAVED_MODEL_PATH = 'saved/{}.pt'.format(DATA)
 
 args = load_arguments()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -24,18 +27,23 @@ if args.cuda:
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 if DATA == 'MNIST':
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data_MNIST', train=True, download=True, transform=transforms.ToTensor()), batch_size=args.batch_size,
-        shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()),
+        datasets.MNIST('../data_MNIST', train=True, download=True, transform=transforms.ToTensor()),
         batch_size=args.batch_size, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size,
+        shuffle=True, **kwargs)
 else:
     train_loader = torch.utils.data.DataLoader(
-        datasets.MNIST('../data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()), batch_size=args.batch_size,
-        shuffle=True, **kwargs)
-    test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data_FashionMNIST', train=False, transform=transforms.ToTensor()),
+        datasets.MNIST('../data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()),
+        batch_size=args.batch_size, shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data_FashionMNIST', train=False, transform=transforms.ToTensor()),
         batch_size=args.batch_size, shuffle=True, **kwargs)
 
-model = VAE()
+if args.resume and os.path.isfile(SAVED_MODEL_PATH):
+    model = torch.load(SAVED_MODEL_PATH)
+else:
+    model = VAE()
 if args.cuda:
     model.cuda()
 
@@ -72,7 +80,9 @@ def train(epoch):
         optimizer.step()
         if batch_idx % args.log_interval == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data),
-                len(train_loader.dataset), 100. * batch_idx / len(train_loader), loss.data[0] / len(data)))
+                                                                           len(train_loader.dataset),
+                                                                           100. * batch_idx / len(train_loader),
+                                                                           loss.data[0] / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(train_loader.dataset)))
 
@@ -103,3 +113,4 @@ for epoch in range(1, args.epochs + 1):
         sample = sample.cuda()
     sample = model.decode(sample).cpu()
     save_image(sample.data.view(64, 1, 28, 28), 'results/{}_sample_{}.png'.format(DATA, epoch))
+    torch.save(model, SAVED_MODEL_PATH)
