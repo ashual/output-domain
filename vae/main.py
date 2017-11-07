@@ -11,6 +11,9 @@ from torchvision.utils import save_image
 from vae.model import VAE
 from vae.options import load_arguments
 
+# DATA = 'MNIST'
+DATA = 'FashionMNIST'
+
 args = load_arguments()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
@@ -19,11 +22,18 @@ if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-train_loader = torch.utils.data.DataLoader(
-    datasets.MNIST('../data', train=True, download=True, transform=transforms.ToTensor()), batch_size=args.batch_size,
-    shuffle=True, **kwargs)
-test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data', train=False, transform=transforms.ToTensor()),
-    batch_size=args.batch_size, shuffle=True, **kwargs)
+if DATA == 'MNIST':
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data_MNIST', train=True, download=True, transform=transforms.ToTensor()), batch_size=args.batch_size,
+        shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()),
+        batch_size=args.batch_size, shuffle=True, **kwargs)
+else:
+    train_loader = torch.utils.data.DataLoader(
+        datasets.MNIST('../data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()), batch_size=args.batch_size,
+        shuffle=True, **kwargs)
+    test_loader = torch.utils.data.DataLoader(datasets.MNIST('../data_FashionMNIST', train=False, transform=transforms.ToTensor()),
+        batch_size=args.batch_size, shuffle=True, **kwargs)
 
 model = VAE()
 if args.cuda:
@@ -79,7 +89,7 @@ def test(epoch):
         if i == 0:
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
-            save_image(comparison.data.cpu(), 'results/reconstruction_' + str(epoch) + '.png', nrow=n)
+            save_image(comparison.data.cpu(), 'results/{}_reconstruction_{}.png'.format(DATA, epoch), nrow=n)
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
@@ -92,4 +102,4 @@ for epoch in range(1, args.epochs + 1):
     if args.cuda:
         sample = sample.cuda()
     sample = model.decode(sample).cpu()
-    save_image(sample.data.view(64, 1, 28, 28), 'results/sample_' + str(epoch) + '.png')
+    save_image(sample.data.view(64, 1, 28, 28), 'results/{}_sample_{}.png'.format(DATA, epoch))

@@ -127,4 +127,5 @@ venv.bak/
 .nfs*
 
 # pytorch files
-data/
+data_FashionMNIST/
+data_MNIST/
