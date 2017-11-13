@@ -11,8 +11,9 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from vae.discriminator import Discriminator
-from vae.loss import generator_loss_function, discriminator_loss_function
+from vae.loss import generator_loss_function2, discriminator_loss_function
 from vae.model import VAE
+from vae.model2 import VAE2
 from vae.options import load_arguments
 
 SAVED_MODEL_MNIST_PATH = 'saved/MNIST.pt'
@@ -53,7 +54,7 @@ else:
 if False and args.resume and os.path.isfile(SAVED_MODEL_FASHION_MNIST_PATH):
     model_fashion_mnist = torch.load(SAVED_MODEL_FASHION_MNIST_PATH)
 else:
-    model_fashion_mnist = VAE()
+    model_fashion_mnist = VAE2()
 
 discriminator_model = Discriminator()
 
@@ -69,28 +70,36 @@ D_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 def train(epoch):
     model_fashion_mnist.train()
     train_loss = 0
+    discriminator_loss = 0
+    d_loss = None
     for batch_idx, (data, _) in enumerate(train_loader_fashion_mnist):
         train_discriminator(data)
+        # if batch_idx % 3 != 0:
+        #     continue
         data = Variable(data)
         if args.cuda:
             data = data.cuda()
         optimizer.zero_grad()
-        recon_batch, mu, logvar = model_fashion_mnist(data)
-        if batch_idx % 2 == 0:
-            loss = generator_loss_function(recon_batch, data, mu, logvar, args)
+        recon_batch = model_fashion_mnist(data)
+        z = model_fashion_mnist.encoder_only(data)
+        d_loss = discriminator_loss_function(discriminator_model(z))
+        if batch_idx % 10 != 9:
+            loss = generator_loss_function2(recon_batch, data)
             loss.backward()
         else:
-            d_loss = discriminator_loss_function(discriminator_model(mu))
+
             d_loss.backward()
 
         train_loss += loss.data[0]
+        discriminator_loss += d_loss.data[0]
         optimizer.step()
         if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(epoch, batch_idx * len(data),
+            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} d loss: {:.6f}'.format(epoch,
+                                                                           batch_idx * len(data),
                                                                            len(train_loader_fashion_mnist.dataset),
-                                                                           100. * batch_idx / len(
-                                                                               train_loader_fashion_mnist),
-                                                                           loss.data[0] / len(data)))
+                                                                           100. * batch_idx / len(train_loader_fashion_mnist),
+                                                                           loss.data[0] / len(data),
+                                                                           discriminator_loss / len(data)))
 
     print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(train_loader_fashion_mnist.dataset)))
 
@@ -102,8 +111,8 @@ def test(epoch):
         if args.cuda:
             data = data.cuda()
         data = Variable(data, volatile=True)
-        recon_batch, mu, logvar = model_fashion_mnist(data)
-        test_loss += generator_loss_function(recon_batch, data, mu, logvar, args).data[0]
+        recon_batch = model_fashion_mnist(data)
+        test_loss += generator_loss_function2(recon_batch, data).data[0]
         if i == 0:
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
@@ -117,29 +126,37 @@ def train_discriminator(data):
     data = Variable(data)
 
     # Sample data
-    for index, (mnist_data, _) in enumerate(train_loader_mnist):
-        mnist_data = Variable(mnist_data)
+    try:
+        mnist_data, _ = train_loader_mnist_iter.next()
+    except StopIteration:
+        train_loader_mnist_iter = iter(train_loader_mnist)
+        mnist_data, _ = train_loader_mnist_iter.next()
+    D_optimizer.zero_grad()
+    mnist_data = Variable(mnist_data)
 
-        # Dicriminator forward-loss-backward-update
-        z_data = model_fashion_mnist.encoder_only(data)
-        z_mnist_data = model_mnist.encoder_only(mnist_data)
-        D_real = discriminator_model(z_mnist_data)
-        D_fake = discriminator_model(z_data)
+    # Dicriminator forward-loss-backward-update
+    z_data = model_fashion_mnist.encoder_only(data)
+    z_mnist_data = model_mnist.encoder_only(mnist_data)
+    D_real = discriminator_model(z_mnist_data)
+    D_fake = discriminator_model(z_data)
 
-        D_loss = -(torch.mean(D_real) - torch.mean(D_fake))
-        # print('loss D_real {:.4f}, loss D_fake {:.4f}'.format(torch.mean(D_real).data.numpy()[0],
-        #                                                       torch.mean(D_fake).data.numpy()[0]))
-        D_loss.backward()
-        D_optimizer.step()
+    D_loss = -(torch.mean(D_real) - torch.mean(D_fake))
+    if D_loss.data.numpy()[0] < -1.:
+        return
 
-        # Weight clipping
-        for p in discriminator_model.parameters():
-            p.data.clamp_(-0.01, 0.01)
+    D_loss.backward()
+    D_optimizer.step()
 
-            # Housekeeping - reset gradient
-            D_optimizer.zero_grad()
-        if index >= 5:
-            break
+    # Weight clipping
+    # for p in discriminator_model.parameters():
+    #     p.data.clamp_(-0.01, 0.01)
+
+    # Housekeeping - reset gradient
+
+    print(
+        'loss D_real {:.4f}, loss D_fake {:.4f}, total loss: {:.4f}'.format(torch.mean(D_real).data.numpy()[0],
+                                                                            torch.mean(D_fake).data.numpy()[0],
+                                                                            D_loss.data.numpy()[0]))
 
 
 for epoch in range(1, args.epochs + 1):
@@ -151,8 +168,8 @@ for epoch in range(1, args.epochs + 1):
         one_digit = np.where(labels.numpy() == idx)[0]
         sample_digit = sample.numpy()[one_digit]
         sample_digit = Variable(torch.FloatTensor(sample_digit))
-        save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
-                   'results/{}_sample_{}_{}.png'.format('EXAMPLE_MNIST', epoch, idx))
+        # save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
+        #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_MNIST', epoch, idx))
         if args.cuda:
             sample_digit = sample_digit.cuda()
         sample_digit, _ = model_mnist.encode(sample_digit.view(-1, 784))

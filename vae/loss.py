@@ -16,7 +16,7 @@ def generator_loss_function(recon_x, x, mu, logvar, args):
     return BCE + KLD
 
 
-def generator_loss_function2(recon_x, x, args):
+def generator_loss_function2(recon_x, x):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784))
     return BCE
 
