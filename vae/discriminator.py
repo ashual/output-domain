@@ -1,5 +1,5 @@
 from torch import nn
-
+import torch.nn.functional as F
 
 class Discriminator(nn.Module):
 
@@ -11,5 +11,5 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
-        x = self.fc2(x)
+        x = F.sigmoid(self.fc2(x))
         return x

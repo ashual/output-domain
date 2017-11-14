@@ -2,9 +2,9 @@ from torch import nn
 from torch.autograd import Variable
 
 
-class VAE2(nn.Module):
+class VAE(nn.Module):
     def __init__(self):
-        super(VAE2, self).__init__()
+        super(VAE, self).__init__()
 
         self.fc1 = nn.Linear(784, 400)
         self.fc2 = nn.Linear(400, 20)
@@ -24,7 +24,7 @@ class VAE2(nn.Module):
 
     def forward(self, x):
         z = self.encode(x.view(-1, 784))
-        return self.decode(z)
+        return self.decode(z), z
 
     def encoder_only(self, x):
         z = self.encode(x.view(-1, 784))

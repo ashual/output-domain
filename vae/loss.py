@@ -2,7 +2,7 @@ import torch
 from torch.nn import functional as F
 
 
-def generator_loss_function(recon_x, x, mu, logvar, args):
+def complex_loss_function(recon_x, x, mu, logvar, args):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784))
 
     # see Appendix B from VAE paper:
@@ -16,7 +16,7 @@ def generator_loss_function(recon_x, x, mu, logvar, args):
     return BCE + KLD
 
 
-def generator_loss_function2(recon_x, x):
+def simple_loss_function(recon_x, x):
     BCE = F.binary_cross_entropy(recon_x, x.view(-1, 784))
     return BCE
 

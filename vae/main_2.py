@@ -11,13 +11,14 @@ from torch.autograd import Variable
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
 from vae.discriminator import Discriminator
-from vae.loss import generator_loss_function2, discriminator_loss_function
-from vae.complex_model import VAE
-from vae.simple_model import VAE2
+from vae.loss import complex_loss_function as fashion_loss
+from vae.loss import simple_loss_function as mnist_loss
+from vae.loss import discriminator_loss_function
+from vae.complex_model import VAE as FashionMnistModel
+from vae.simple_model import VAE as MnistModel
 from vae.options import load_arguments
 
-SAVED_MODEL_MNIST_PATH = 'saved/MNIST.pt'
-SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST.pt'
+
 lr = 1e-3
 
 args = load_arguments()
@@ -36,7 +37,6 @@ test_loader_mnist = torch.utils.data.DataLoader(
     datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size,
     shuffle=True, **kwargs)
 
-# train_loader_mnist_iter = iter(train_loader_mnist)
 test_loader_mnist_iter = iter(test_loader_mnist)
 
 train_loader_fashion_mnist = torch.utils.data.DataLoader(
@@ -48,16 +48,9 @@ test_loader_fashion_mnist = torch.utils.data.DataLoader(
 
 test_loader_fashion_mnist_iter = iter(test_loader_fashion_mnist)
 
-if args.resume and os.path.isfile(SAVED_MODEL_MNIST_PATH):
-    model_mnist = torch.load(SAVED_MODEL_MNIST_PATH)
-else:
-    model_mnist = VAE()
 
-if False and args.resume and os.path.isfile(SAVED_MODEL_FASHION_MNIST_PATH):
-    model_fashion_mnist = torch.load(SAVED_MODEL_FASHION_MNIST_PATH)
-else:
-    model_fashion_mnist = VAE2()
-
+model_mnist = MnistModel()
+model_fashion_mnist = FashionMnistModel()
 discriminator_model = Discriminator()
 
 if args.cuda:
@@ -65,8 +58,9 @@ if args.cuda:
     model_fashion_mnist.cuda()
     discriminator_model.cuda()
 
-optimizer = optim.Adam(model_fashion_mnist.parameters(), lr=lr)
-D_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
+mnist_optimizer = optim.Adam(model_mnist.parameters(), lr=lr)
+fashion_optimizer = optim.Adam(model_fashion_mnist.parameters(), lr=lr)
+d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 
 
 def train(epoch):
@@ -112,18 +106,28 @@ def train(epoch):
 def test(epoch):
     model_fashion_mnist.eval()
     test_loss = 0
+    for i, (data, _) in enumerate(test_loader_mnist):
+        if args.cuda:
+            data = data.cuda()
+        data = Variable(data, volatile=True)
+        recon_batch, _ = model_mnist(data)
+        test_loss += mnist_loss(recon_batch, data).data[0]
+        if i == 0:
+            n = min(data.size(0), 8)
+            comparison = torch.cat([data[:n], recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
+            save_image(comparison.data.cpu(), 'results/{}_reconstruction_{}.png'.format('MNIST', epoch), nrow=n)
+
     for i, (data, _) in enumerate(test_loader_fashion_mnist):
         if args.cuda:
             data = data.cuda()
         data = Variable(data, volatile=True)
-        recon_batch = model_fashion_mnist(data)
-        test_loss += generator_loss_function2(recon_batch, data).data[0]
+        recon_batch, _, _ = model_fashion_mnist(data)
+        test_loss += mnist_loss(recon_batch, data).data[0]
         if i == 0:
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
             save_image(comparison.data.cpu(), 'results/{}_reconstruction_{}.png'.format('FASHION_MNIST', epoch), nrow=n)
-
-    test_loss /= len(test_loader_fashion_mnist.dataset)
+    test_loss /= len(test_loader_mnist.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
 
 
@@ -162,29 +166,74 @@ def train_discriminator(data, train_loader_mnist_iter):
 
 
 for epoch in range(1, args.epochs + 1):
-    train(epoch)
-    test(epoch)
+    print('---- Epoch {} ----'.format(epoch))
+    model_fashion_mnist.train()
+    model_mnist.train()
+    discriminator_model.train()
+
+    # ---------- Train --------------
+    train_loader_fashion_mnist_iter = iter(train_loader_fashion_mnist)
+    train_loader_mnist_iter = iter(train_loader_mnist)
+    while True:
+        try:
+            fashion_batch, _ = train_loader_fashion_mnist_iter.next()
+            mnist_batch, _ = train_loader_mnist_iter.next()
+            fashion_batch = Variable(fashion_batch)
+            mnist_batch = Variable(mnist_batch)
+            if args.cuda:
+                fashion_batch = fashion_batch.cuda()
+                mnist_batch = mnist_batch.cuda()
+        except StopIteration:
+            break
+
+        mnist_optimizer.zero_grad()
+        fashion_optimizer.zero_grad()
+        d_optimizer.zero_grad()
+
+        decode_f, mu_f, logvar_f = model_fashion_mnist(fashion_batch)
+        f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
+        f_loss.backward()
+        fashion_optimizer.step()
+
+        decode_m, z_m = model_mnist(mnist_batch)
+
+        d_real = discriminator_model(Variable(mu_f.data, requires_grad=True))
+        d_fake = discriminator_model(Variable(z_m.data, requires_grad=True))
+
+        d_loss = -(torch.mean(d_real) - torch.mean(d_fake))
+        d_loss.backward()
+        d_optimizer.step()
+        d_optimizer.zero_grad()
+
+        d_fake_m = discriminator_model(z_m)
+
+        m_loss_discriminator = discriminator_loss_function(d_fake_m)
+        m_loss_generator = mnist_loss(decode_m, mnist_batch)
+        m_loss = m_loss_generator + 0.001 * m_loss_discriminator
+        m_loss.backward()
+        mnist_optimizer.step()
+
+        for p in discriminator_model.parameters():
+            p.data.clamp_(-1., 1.)
+
+    print('fashion lost {}'.format(f_loss.data[0]))
+    print('mnist lost {} from d {}'.format(m_loss_generator.data[0], m_loss_discriminator.data[0]))
+    print('d lost real {}'.format(torch.mean(d_real).data[0]))
+    print('d lost fake {}'.format(torch.mean(d_fake).data[0]))
+    # ---------- Test --------------
     # sample = Variable(torch.randn(64, 20))
+    test(epoch)
     sample, labels = test_loader_fashion_mnist_iter.next()
     for idx in range(9):
         one_digit = np.where(labels.numpy() == idx)[0]
         sample_digit = sample.numpy()[one_digit]
         sample_digit = Variable(torch.FloatTensor(sample_digit))
         # save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
-        #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_MNIST', epoch, idx))
+        #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_Fashion_MNIST', epoch, idx))
         if args.cuda:
             sample_digit = sample_digit.cuda()
-        sample_digit = model_fashion_mnist.encode(sample_digit.view(-1, 784))
+        sample_digit = model_fashion_mnist.encoder_only(sample_digit.view(-1, 784))
         sample_digit = model_mnist.decode(sample_digit).cpu()
         save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
-                   'results/{}_sample_{}_{}.png'.format('FASHION_MNIST', epoch, idx))
-    torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
-
-
-# Forward A
-# Forward B
-# Forward Discriminator
-# Backward + Optimize Discriminator
-# Backward + Optimize A
-# Backward + Optimize B + Discriminator loss
-# Test
+                   'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx))
+    #torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
