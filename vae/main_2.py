@@ -7,6 +7,7 @@ import torch
 import torch.utils.data
 from torch import optim
 from torch.autograd import Variable
+from torch import nn
 
 from torchvision import datasets, transforms
 from torchvision.utils import save_image
@@ -58,10 +59,15 @@ if args.cuda:
     model_fashion_mnist.cuda()
     discriminator_model.cuda()
 
+mnist_optimizer_encoder_params = [{'params': model_mnist.fc1.parameters()},
+                                  {'params':  model_mnist.fc2.parameters()}]
 mnist_optimizer = optim.Adam(model_mnist.parameters(), lr=lr)
+mnist_optimizer_encoder = optim.Adam(mnist_optimizer_encoder_params, lr=lr)
+# mnist_optimizer_encoder = optim.Adam([model_mnist.fc1, model_mnist.fc2], lr=lr)
 fashion_optimizer = optim.Adam(model_fashion_mnist.parameters(), lr=lr)
 d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 
+criterion = nn.BCELoss()
 
 def train(epoch):
     model_fashion_mnist.train()
@@ -165,6 +171,15 @@ def train_discriminator(data, train_loader_mnist_iter):
     #                                                                         D_loss.data.numpy()[0]))
 
 
+def reset_grads():
+    model_mnist.zero_grad()
+    model_fashion_mnist.zero_grad()
+    discriminator_model.zero_grad()
+    mnist_optimizer.zero_grad()
+    mnist_optimizer_encoder.zero_grad()
+    fashion_optimizer.zero_grad()
+    d_optimizer.zero_grad()
+
 for epoch in range(1, args.epochs + 1):
     print('---- Epoch {} ----'.format(epoch))
     model_fashion_mnist.train()
@@ -174,6 +189,7 @@ for epoch in range(1, args.epochs + 1):
     # ---------- Train --------------
     train_loader_fashion_mnist_iter = iter(train_loader_fashion_mnist)
     train_loader_mnist_iter = iter(train_loader_mnist)
+    counter = 0
     while True:
         try:
             fashion_batch, _ = train_loader_fashion_mnist_iter.next()
@@ -186,40 +202,55 @@ for epoch in range(1, args.epochs + 1):
         except StopIteration:
             break
 
-        mnist_optimizer.zero_grad()
-        fashion_optimizer.zero_grad()
-        d_optimizer.zero_grad()
+        # Train generators
+        if 0 <= counter % 20 < 10:
+            reset_grads()
+            decode_f, mu_f, logvar_f = model_fashion_mnist(fashion_batch)
+            f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
+            f_loss.backward()
+            fashion_optimizer.step()
 
-        decode_f, mu_f, logvar_f = model_fashion_mnist(fashion_batch)
-        f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
-        f_loss.backward()
-        fashion_optimizer.step()
+            decode_m, z_m = model_mnist(mnist_batch)
+            m_loss_generator = mnist_loss(decode_m, mnist_batch)
+            m_loss_generator.backward()
+            mnist_optimizer.step()
+            print('fashion lost {:.4f}'.format(f_loss.data[0]))
+            print('mnist lost {:.4f}'.format(m_loss_generator.data[0]))
 
-        decode_m, z_m = model_mnist(mnist_batch)
+        # Train Discriminator
+        if 10 <= counter % 20 < 15:
+            reset_grads()
+            _, mu_f, _ = model_fashion_mnist(fashion_batch)
+            mu_f = mu_f.detach()
+            _, z_m = model_mnist(mnist_batch)
+            z_m = z_m.detach()
 
-        d_real = discriminator_model(Variable(mu_f.data, requires_grad=True))
-        d_fake = discriminator_model(Variable(z_m.data, requires_grad=True))
+            d_real_decision = discriminator_model(mu_f)
+            size = d_real_decision.size()[0]
+            d_real_error = criterion(d_real_decision, Variable(torch.ones(size, 1)))  # ones = true
+            d_real_error.backward()
 
-        d_loss = -(torch.mean(d_real) - torch.mean(d_fake))
-        d_loss.backward()
-        d_optimizer.step()
-        d_optimizer.zero_grad()
+            d_fake_decision = discriminator_model(z_m)
+            d_fake_error = criterion(d_fake_decision, Variable(torch.zeros(size, 1)))  # zeros = fake
+            d_fake_error.backward()
+            d_optimizer.step()
+            print('d lost real {:.4f}'.format(torch.mean(d_real_error).data[0]))
+            print('d lost fake {:.4f}'.format(torch.mean(d_fake_error).data[0]))
+            # for p in discriminator_model.parameters():
+            #     p.data.clamp_(-1., 1.)
 
-        d_fake_m = discriminator_model(z_m)
+        if 15 <= counter % 20 < 20:
+            reset_grads()
+            _, z_m = model_mnist(mnist_batch)
+            d_fake_m = discriminator_model(z_m)
+            size = d_fake_m.size()[0]
 
-        m_loss_discriminator = discriminator_loss_function(d_fake_m)
-        m_loss_generator = mnist_loss(decode_m, mnist_batch)
-        m_loss = m_loss_generator + 0.001 * m_loss_discriminator
-        m_loss.backward()
-        mnist_optimizer.step()
+            m_loss_discriminator = criterion(d_fake_m, Variable(torch.ones(size, 1)))
+            m_loss_discriminator.backward()
+            mnist_optimizer_encoder.step()
+            print('mnist lost discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
+        counter += 1
 
-        for p in discriminator_model.parameters():
-            p.data.clamp_(-1., 1.)
-
-    print('fashion lost {}'.format(f_loss.data[0]))
-    print('mnist lost {} from d {}'.format(m_loss_generator.data[0], m_loss_discriminator.data[0]))
-    print('d lost real {}'.format(torch.mean(d_real).data[0]))
-    print('d lost fake {}'.format(torch.mean(d_fake).data[0]))
     # ---------- Test --------------
     # sample = Variable(torch.randn(64, 20))
     test(epoch)
