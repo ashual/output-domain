@@ -190,6 +190,7 @@ for epoch in range(1, args.epochs + 1):
     train_loader_fashion_mnist_iter = iter(train_loader_fashion_mnist)
     train_loader_mnist_iter = iter(train_loader_mnist)
     counter = 0
+    times = 0
     while True:
         try:
             fashion_batch, _ = train_loader_fashion_mnist_iter.next()
@@ -203,7 +204,7 @@ for epoch in range(1, args.epochs + 1):
             break
 
         # Train generators
-        if 0 <= counter % 20 < 10:
+        if counter % 3 == 0:
             reset_grads()
             decode_f, mu_f, logvar_f = model_fashion_mnist(fashion_batch)
             f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
@@ -216,9 +217,14 @@ for epoch in range(1, args.epochs + 1):
             mnist_optimizer.step()
             print('fashion lost {:.4f}'.format(f_loss.data[0]))
             print('mnist lost {:.4f}'.format(m_loss_generator.data[0]))
+            if times > 100:
+                counter += 1
+                times = 0
+            else:
+                times += 1
 
         # Train Discriminator
-        if 10 <= counter % 20 < 15:
+        if counter % 3 == 1:
             reset_grads()
             _, mu_f, _ = model_fashion_mnist(fashion_batch)
             mu_f = mu_f.detach()
@@ -236,10 +242,12 @@ for epoch in range(1, args.epochs + 1):
             d_optimizer.step()
             print('d lost real {:.4f}'.format(torch.mean(d_real_error).data[0]))
             print('d lost fake {:.4f}'.format(torch.mean(d_fake_error).data[0]))
+            if torch.mean(d_real_error).data[0] < 0.3 or torch.mean(d_fake_error).data[0] < 0.3:
+                counter += 1
             # for p in discriminator_model.parameters():
             #     p.data.clamp_(-1., 1.)
 
-        if 15 <= counter % 20 < 20:
+        if counter % 3 == 2:
             reset_grads()
             _, z_m = model_mnist(mnist_batch)
             d_fake_m = discriminator_model(z_m)
@@ -249,7 +257,8 @@ for epoch in range(1, args.epochs + 1):
             m_loss_discriminator.backward()
             mnist_optimizer_encoder.step()
             print('mnist lost discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
-        counter += 1
+            if m_loss_discriminator.data[0] < 0.55:
+                counter += 1
 
     # ---------- Test --------------
     # sample = Variable(torch.randn(64, 20))
