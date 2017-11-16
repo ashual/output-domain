@@ -203,9 +203,10 @@ for epoch in range(1, args.epochs + 1):
         except StopIteration:
             break
 
+        reset_grads()
+
         # Train generators
         if counter % 3 == 0:
-            reset_grads()
             decode_f, mu_f, logvar_f = model_fashion_mnist(fashion_batch)
             f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
             f_loss.backward()
@@ -225,7 +226,6 @@ for epoch in range(1, args.epochs + 1):
 
         # Train Discriminator
         if counter % 3 == 1:
-            reset_grads()
             _, mu_f, _ = model_fashion_mnist(fashion_batch)
             mu_f = mu_f.detach()
             _, z_m = model_mnist(mnist_batch)
@@ -242,13 +242,12 @@ for epoch in range(1, args.epochs + 1):
             d_optimizer.step()
             print('d lost real {:.4f}'.format(torch.mean(d_real_error).data[0]))
             print('d lost fake {:.4f}'.format(torch.mean(d_fake_error).data[0]))
-            if torch.mean(d_real_error).data[0] < 0.3 or torch.mean(d_fake_error).data[0] < 0.3:
+            if torch.mean(d_real_error).data[0] < 0.2 and torch.mean(d_fake_error).data[0] < 0.2:
                 counter += 1
             # for p in discriminator_model.parameters():
             #     p.data.clamp_(-1., 1.)
 
         if counter % 3 == 2:
-            reset_grads()
             _, z_m = model_mnist(mnist_batch)
             d_fake_m = discriminator_model(z_m)
             size = d_fake_m.size()[0]
@@ -257,8 +256,11 @@ for epoch in range(1, args.epochs + 1):
             m_loss_discriminator.backward()
             mnist_optimizer_encoder.step()
             print('mnist lost discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
-            if m_loss_discriminator.data[0] < 0.55:
+            if times > 100:
                 counter += 1
+                times = 0
+            else:
+                times += 1
 
     # ---------- Test --------------
     # sample = Variable(torch.randn(64, 20))
