@@ -272,13 +272,13 @@ for epoch in range(1, args.epochs + 1):
             # print('d lost real {:.4f}'.format(d_real_error.data[0]))
             # print('d lost fake {:.4f}'.format(d_fake_error.data[0]))
 
-            if d_real_error.data[0] < 0.45 and d_fake_error.data[0] < 0.45:
+            if d_real_error.data[0] < 0.3 and d_fake_error.data[0] < 0.3:
                 counter += 1
             # for p in discriminator_model.parameters():
             #     p.data.clamp_(-0.1, 0.1)
 
         if counter % 3 == 2:
-            _, z_m = model_mnist(mnist_batch)
+            z_m = model_mnist.encoder_only(mnist_batch)
             d_fake_m = discriminator_model(z_m)
             size = d_fake_m.size()[0]
 
@@ -288,7 +288,7 @@ for epoch in range(1, args.epochs + 1):
             graph.last5 = m_loss_discriminator.data[0]
             graph.add_point(running_counter, 'mnist encoder')
             # print('mnist loss discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
-            if times > 4:
+            if times >= 1:
                 counter += 1
                 times = 0
             else:
