@@ -63,7 +63,7 @@ if args.resume and os.path.isfile(SAVED_MODEL_FASHION_MNIST_PATH):
     model_fashion_mnist = torch.load(SAVED_MODEL_FASHION_MNIST_PATH)
 else:
     model_fashion_mnist = FashionMnistModel()
-discriminator_model = Discriminator()
+discriminator_model = Discriminator(20, 20)
 
 if args.cuda:
     model_mnist.cuda()
@@ -223,6 +223,8 @@ for epoch in range(1, args.epochs + 1):
 
         # Train generators
         if counter % 3 == 0:
+            counter += 1
+            continue
             # decode_f, mu_f, logvar_f, _ = model_fashion_mnist(fashion_batch)
             # f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
             # f_loss.backward()
@@ -252,17 +254,17 @@ for epoch in range(1, args.epochs + 1):
             _, z_m = model_mnist(mnist_batch)
             z_m = z_m.detach()
 
-            d_real_decision = discriminator_model(z_f)
+            d_real_decision = discriminator_model(z_f)[:, 0]
             size = d_real_decision.size()[0]
-            ones = Variable(torch.ones(size, 1))
-            zeros = Variable(torch.zeros(size, 1))
+            ones = Variable(torch.ones(size))
+            zeros = Variable(torch.zeros(size))
             if args.cuda:
                 ones = ones.cuda()
                 zeros = zeros.cuda()
             d_real_error = criterion(d_real_decision, ones)  # ones = true
             d_real_error.backward()
 
-            d_fake_decision = discriminator_model(z_m)
+            d_fake_decision = discriminator_model(z_m)[:, 0]
             d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
             d_fake_error.backward()
             d_optimizer.step()
@@ -280,16 +282,16 @@ for epoch in range(1, args.epochs + 1):
 
         if counter % 3 == 2:
             z_m = model_mnist.encoder_only(mnist_batch)
-            d_fake_m = discriminator_model(z_m)
+            d_fake_m = discriminator_model(z_m)[:, 0]
             size = d_fake_m.size()[0]
 
-            m_loss_discriminator = criterion(d_fake_m, Variable(torch.ones(size, 1)))
+            m_loss_discriminator = criterion(d_fake_m, Variable(torch.ones(size)))
             m_loss_discriminator.backward()
             mnist_optimizer_encoder.step()
             graph.last5 = m_loss_discriminator.data[0]
             graph.add_point(running_counter, 'mnist encoder')
             # print('mnist loss discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
-            if times >= 1:
+            if times >= 10:
                 counter += 1
                 times = 0
             else:
@@ -298,9 +300,9 @@ for epoch in range(1, args.epochs + 1):
     # ---------- Test --------------
     test(epoch)
     try:
-        sample, labels = test_loader_fashion_mnist_iter.next()
+        sample, labels = test_loader_mnist_iter.next()
     except Exception:
-        test_loader_fashion_mnist_iter = iter(test_loader_fashion_mnist)
+        test_loader_mnist_iter = iter(test_loader_mnist)
         sample, labels = test_loader_fashion_mnist_iter.next()
     for idx in range(10):
         one_digit = np.where(labels.numpy() == idx)[0]
@@ -311,11 +313,11 @@ for epoch in range(1, args.epochs + 1):
         #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_Fashion_MNIST', epoch, idx))
         if args.cuda:
             sample_digit = sample_digit.cuda()
-        sample_digit = model_fashion_mnist.encoder_only(sample_digit.view(-1, 784))
-        sample_digit = model_mnist.decode(sample_digit).cpu()
+        sample_digit = model_mnist.encoder_only(sample_digit.view(-1, 784))
+        sample_digit = model_fashion_mnist.decode(sample_digit).cpu()
         concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
         graph.draw(str(idx), concat_data.view(len(sample_digit)*2, 1, 28, 28).cpu().numpy())
         # save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
         #            'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
     torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
-    # torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
+    torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
