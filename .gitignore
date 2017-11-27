@@ -131,3 +131,6 @@ data_FashionMNIST/
 data_MNIST/
 vae/saved/
 ok_results/
+14-epochs-results/
+encoder_trained_results/
+results/

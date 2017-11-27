@@ -72,7 +72,9 @@ if args.cuda:
 
 mnist_optimizer_encoder_params = [{'params': model_mnist.fc1.parameters()},
                                   {'params':  model_mnist.fc2.parameters()}]
-mnist_optimizer = optim.Adam(model_mnist.parameters(), lr=lr)
+mnist_optimizer_decoder_params = [{'params': model_mnist.fc3.parameters()},
+                                  {'params':  model_mnist.fc4.parameters()}]
+mnist_optimizer = optim.Adam(mnist_optimizer_decoder_params, lr=lr)
 mnist_optimizer_encoder = optim.Adam(mnist_optimizer_encoder_params, lr=lr)
 # mnist_optimizer_encoder = optim.Adam([model_mnist.fc1, model_mnist.fc2], lr=lr)
 fashion_optimizer = optim.Adam(model_fashion_mnist.parameters(), lr=lr)
@@ -222,8 +224,6 @@ for epoch in range(1, args.epochs + 1):
 
         # Train generators
         if counter % 3 == 0:
-            counter += 1
-            continue
             # decode_f, mu_f, logvar_f, _ = model_fashion_mnist(fashion_batch)
             # f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
             # f_loss.backward()
@@ -299,9 +299,9 @@ for epoch in range(1, args.epochs + 1):
     # ---------- Test --------------
     test(epoch)
     try:
-        sample, labels = test_loader_mnist_iter.next()
+        sample, labels = test_loader_fashion_mnist_iter.next()
     except Exception:
-        test_loader_mnist_iter = iter(test_loader_mnist)
+        test_loader_fashion_mnist_iter = iter(test_loader_fashion_mnist)
         sample, labels = test_loader_fashion_mnist_iter.next()
     for idx in range(10):
         one_digit = np.where(labels.numpy() == idx)[0]
@@ -312,10 +312,47 @@ for epoch in range(1, args.epochs + 1):
         #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_Fashion_MNIST', epoch, idx))
         if args.cuda:
             sample_digit = sample_digit.cuda()
-        sample_digit = model_mnist.encoder_only(sample_digit.view(-1, 784))
-        sample_digit = model_fashion_mnist.decode(sample_digit).cpu()
+        sample_digit = model_fashion_mnist.encoder_only(sample_digit.view(-1, 784))
+        sample_digit = model_mnist.decode(sample_digit).cpu()
         concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
         save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
-                   'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
-    torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
-    torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
+                   'results/{}_sample_{}_{}.png'.format('FASHION_MNIST', epoch, idx), nrow=len(sample_digit))
+    # torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
+    # torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
+
+
+    #
+    # try:
+    #     sample_fashion, labels_fashion = test_loader_fashion_mnist_iter.next()
+    #     sample_mnist, labels_mnist = test_loader_mnist_iter.next()
+    # except Exception:
+    #     test_loader_fashion_mnist_iter = iter(test_loader_fashion_mnist)
+    #     sample, labels = test_loader_fashion_mnist_iter.next()
+    # for idx in range(10):
+    #     # one_digit = np.where(labels.numpy() == idx)[0]
+    #     # sample_digit = sample.numpy()[one_digit]
+    #     sample_digit_fashion_torch = torch.FloatTensor(sample_fashion[0])
+    #     sample_digit_mnist_torch = torch.FloatTensor(sample_mnist[0])
+    #     sample_digit_fashion = Variable(sample_digit_fashion_torch)
+    #     sample_digit_mnist = Variable(sample_digit_mnist_torch)
+    #     # save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
+    #     #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_Fashion_MNIST', epoch, idx))
+    #     if args.cuda:
+    #         sample_digit_mnist = sample_digit_mnist.cuda()
+    #         sample_digit_fashion = sample_digit_fashion.cuda()
+    #     sample_digit_f = model_fashion_mnist.encoder_only(sample_digit_fashion.view(-1, 784))
+    #     sample_digit_f_regular = model_fashion_mnist.decode(sample_digit_f).cpu()
+    #     sample_digit_f_cross = model_mnist.decode(sample_digit_f).cpu()
+    #
+    #     sample_digit_m = model_mnist.encoder_only(sample_digit_mnist.view(-1, 784))
+    #     sample_digit_m_regular = model_mnist.decode(sample_digit_m).cpu()
+    #     sample_digit_m_cross = model_fashion_mnist.decode(sample_digit_m).cpu()
+    #
+    #     concat_data = torch.cat((sample_digit_fashion_torch.view(-1, 784),
+    #                              sample_digit_f_regular.data,
+    #                              sample_digit_f_cross.data,
+    #                              sample_digit_mnist_torch.view(-1, 784),
+    #                              sample_digit_m_regular.data,
+    #                              sample_digit_m_cross.data), 0)
+    #     save_image(concat_data.view(6, 1, 28, 28),
+    #                'results/{}_sample_{}_{}.png'.format('FASHION_MNIST', epoch, idx))
