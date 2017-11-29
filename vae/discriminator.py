@@ -10,13 +10,13 @@ class Discriminator(nn.Module):
         self.n_B = n_B
         self.n_C = n_C
         self.use_gpu = use_gpu
-        self.fc1 = nn.Linear(20, 128)
-        self.fc2 = nn.Linear(128, 20)
+        self.fc1 = nn.Linear(100, 200)
+        self.fc2 = nn.Linear(200, 100)
 
-        T_ten_init = torch.randn(20, n_B * n_C) * 0.1
+        T_ten_init = torch.randn(100, n_B * n_C) * 0.1
         self.T_tensor = nn.Parameter(T_ten_init, requires_grad=True)
 
-        self.fc3 = nn.Linear(20 + n_B, 1)
+        self.fc3 = nn.Linear(100 + n_B, 1)
         self.relu = nn.ReLU()
 
     def forward(self, x):

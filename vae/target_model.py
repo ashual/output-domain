@@ -8,9 +8,9 @@ class VAE(nn.Module):
 
         self.fc1 = nn.Linear(2352, 784)
         self.fc2 = nn.Linear(784, 400)
-        self.fc31 = nn.Linear(400, 40)
-        self.fc32 = nn.Linear(400, 40)
-        self.fc4 = nn.Linear(40, 400)
+        self.fc31 = nn.Linear(400, 100)
+        self.fc32 = nn.Linear(400, 100)
+        self.fc4 = nn.Linear(100, 400)
         self.fc5 = nn.Linear(400, 784)
         self.fc6 = nn.Linear(784, 2352)
 

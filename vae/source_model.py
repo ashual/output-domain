@@ -6,7 +6,7 @@ class VAE(nn.Module):
         super(VAE, self).__init__()
 
         self.fc1 = nn.Linear(784, 400)
-        self.fc2 = nn.Linear(400, 20)
+        self.fc2 = nn.Linear(400, 100)
 
         self.relu = nn.ReLU()
 

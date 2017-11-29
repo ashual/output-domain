@@ -28,4 +28,4 @@ class Graph():
         )
 
     def add_images(self, tensor, nrow=8):
-        self.viz.images(tensor.data.numpy(), nrow)
+        self.viz.images(tensor.data.cpu().numpy(), nrow)

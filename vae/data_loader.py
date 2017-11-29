@@ -9,7 +9,7 @@ def get_loader(args, train):
     kwargs = {'pin_memory': True} if args.cuda else {}
     split = 'train' if train else 'test'
 
-    transform = transforms.Compose([transforms.Resize(size=(args.image_size, args.image_size)),
+    transform = transforms.Compose([transforms.Scale(size=args.image_size),
                                     transforms.ToTensor(),
                                     # transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
                                     ])

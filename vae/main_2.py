@@ -50,6 +50,7 @@ def test_reconstruction(epoch):
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], decode_t.view(args.batch_size, 3, args.image_size, args.image_size)[:n]])
             graph.add_images(comparison, n)
+        break
             # save_image(comparison.data.cpu(), 'results/recon_{}.png'.format(epoch), nrow=n)
     # test_loss /= len(test_loader_target.dataset)
     print('====> Epoch {}, Target reconstruction loss: {:.6f}'.format(epoch, test_loss))
@@ -88,7 +89,6 @@ def train_target_generator():
             t_loss = target_loss(decode_t, target_batch, mu_t, logvar_t, args)
             t_loss.backward()
             target_optimizer.step()
-            break
         torch.save(target_model, SAVED_MODEL_TARGET_PATH)
         test_reconstruction(epoch)
 
@@ -201,6 +201,7 @@ def reset_grads():
 if args.resume and os.path.isfile(SAVED_MODEL_TARGET_PATH):
     print('loading target model')
     target_model = torch.load(SAVED_MODEL_TARGET_PATH)
+    target_optimizer = None
 else:
     target_model = TargetModel()
     if args.cuda:
@@ -212,7 +213,7 @@ if args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH):
     source_model = torch.load(SAVED_MODEL_SOURCE_PATH)
 else:
     source_model = SourceModel()
-    discriminator_model = Discriminator(20, 20)
+    discriminator_model = Discriminator(100, 100)
     if args.cuda:
         source_model.cuda()
         discriminator_model.cuda()
@@ -221,6 +222,5 @@ else:
 
 if not (args.resume and os.path.isfile(SAVED_MODEL_TARGET_PATH)):
     train_target_generator()
-exit(1)
 if not (args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH)):
     train_source_generator_and_discriminator()
