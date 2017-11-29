@@ -6,18 +6,21 @@ class VAE(nn.Module):
     def __init__(self):
         super(VAE, self).__init__()
 
-        self.fc1 = nn.Linear(784, 400)
-        self.fc21 = nn.Linear(400, 20)
-        self.fc22 = nn.Linear(400, 20)
-        self.fc3 = nn.Linear(20, 400)
-        self.fc4 = nn.Linear(400, 784)
+        self.fc1 = nn.Linear(2352, 784)
+        self.fc2 = nn.Linear(784, 400)
+        self.fc31 = nn.Linear(400, 40)
+        self.fc32 = nn.Linear(400, 40)
+        self.fc4 = nn.Linear(40, 400)
+        self.fc5 = nn.Linear(400, 784)
+        self.fc6 = nn.Linear(784, 2352)
 
         self.relu = nn.ReLU()
         self.sigmoid = nn.Sigmoid()
 
     def encode(self, x):
-        h1 = self.relu(self.fc1(x))
-        return self.fc21(h1), self.fc22(h1)
+        x = self.relu(self.fc1(x))
+        x = self.relu(self.fc2(x))
+        return self.fc31(x), self.fc32(x)
 
     def reparameterize(self, mu, logvar):
         if self.training:
@@ -28,14 +31,15 @@ class VAE(nn.Module):
             return mu
 
     def decode(self, z):
-        h3 = self.relu(self.fc3(z))
-        return self.sigmoid(self.fc4(h3))
+        x = self.relu(self.fc4(z))
+        x = self.relu(self.fc5(x))
+        return self.sigmoid(self.fc6(x))
 
     def forward(self, x):
-        mu, logvar = self.encode(x.view(-1, 784))
+        mu, logvar = self.encode(x.view(-1, 2352))
         z = self.reparameterize(mu, logvar)
         return self.decode(z), mu, logvar, z
 
     def encoder_only(self, x):
-        mu, _ = self.encode(x.view(-1, 784))
+        mu, _ = self.encode(x.view(-1, 2352))
         return mu

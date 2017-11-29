@@ -26,3 +26,6 @@ class Graph():
             # env=env,
             update='append'
         )
+
+    def add_images(self, tensor, nrow=8):
+        self.viz.images(tensor.data.numpy(), nrow)
