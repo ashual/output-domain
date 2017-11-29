@@ -68,8 +68,8 @@ def transfer(epoch):
         #            'results/{}_sample_{}_{}.png'.format('EXAMPLE_Fashion_MNIST', epoch, idx))
         if args.cuda:
             sample_digit = sample_digit.cuda()
-        sample_digit = target_model.encoder_only(sample_digit.view(-1, 784))
-        sample_digit = source_model.decode(sample_digit)
+        sample_digit = source_model(sample_digit.view(-1, 784))
+        sample_digit = target_model.decode(sample_digit)
         concat_data = torch.cat((sample_digit_torch.view(-1, 2352), sample_digit.data.cpu()), 0)
         save_image(concat_data.view(len(sample_digit) * 2, 3, 28, 28),
                    'results/source_to_target_{}_{}.png'.format(epoch, idx), nrow=len(sample_digit))
@@ -168,7 +168,7 @@ def train_source_generator(mnist_batch, running_counter, times, counter):
 
     ones = Variable(torch.ones(size))
     if args.cuda:
-        ones.cuda()
+        ones = ones.cuda()
     m_loss_discriminator = criterion(d_fake_m, ones)
     m_loss_discriminator.backward()
     source_optimizer.step()
@@ -205,7 +205,7 @@ if args.resume and os.path.isfile(SAVED_MODEL_TARGET_PATH):
 else:
     target_model = TargetModel()
     if args.cuda:
-        target_model.cuda()
+        target_model = target_model.cuda()
     target_optimizer = optim.Adam(target_model.parameters(), lr=lr)
 
 if args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH):
@@ -215,8 +215,8 @@ else:
     source_model = SourceModel()
     discriminator_model = Discriminator(100, 100)
     if args.cuda:
-        source_model.cuda()
-        discriminator_model.cuda()
+        source_model = source_model.cuda()
+        discriminator_model = discriminator_model.cuda()
     source_optimizer = optim.Adam(source_model.parameters(), lr=lr)
     d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 
