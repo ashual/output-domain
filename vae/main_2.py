@@ -49,7 +49,7 @@ def test_reconstruction(epoch):
         if i == 0:
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], decode_t.view(args.batch_size, 3, args.image_size, args.image_size)[:n]])
-            graph.add_images(comparison.data.cpu().numpy(), n, title='recon target')
+            graph.add_images(comparison.data.cpu().numpy(), n, title='recon target epoch'.format(epoch))
         break
             # save_image(comparison.data.cpu(), 'results/recon_{}.png'.format(epoch), nrow=n)
     # test_loss /= len(test_loader_target.dataset)
@@ -70,8 +70,9 @@ def transfer(epoch):
             sample_digit = sample_digit.cuda()
         sample_digit = source_model(sample_digit.view(-1, 784))
         sample_digit = target_model.decode(sample_digit)
-        graph.add_images(sample_digit_torch.numpy(), title='source')
-        graph.add_images(sample_digit.view(-1, 3, args.image_size, args.image_size).data.cpu().numpy(), title='target')
+        graph.add_images(sample_digit_torch.numpy(), title='source epoch {}'.format(epoch))
+        graph.add_images(sample_digit.view(-1, 3, args.image_size, args.image_size).data.cpu().numpy(),
+                         title='target epoch {}'.format(epoch))
         # save_image(concat_data.view(len(sample_digit) * 2, 3, 28, 28),
         #            'results/source_to_target_{}_{}.png'.format(epoch, idx), nrow=len(sample_digit))
 
