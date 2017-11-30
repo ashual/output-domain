@@ -215,15 +215,14 @@ else:
 if args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH):
     print('loading source model')
     source_model = torch.load(SAVED_MODEL_SOURCE_PATH)
-    discriminator_model = Discriminator(100, 100)
 else:
     source_model = SourceModel()
-    discriminator_model = Discriminator(100, 100)
-    if args.cuda:
-        source_model = source_model.cuda()
-        discriminator_model = discriminator_model.cuda()
-    source_optimizer = optim.Adam(source_model.parameters(), lr=lr)
-    d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
+discriminator_model = Discriminator(100, 100)
+if args.cuda:
+    source_model = source_model.cuda()
+    discriminator_model = discriminator_model.cuda()
+source_optimizer = optim.Adam(source_model.parameters(), lr=lr)
+d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 
 if not (args.resume and os.path.isfile(SAVED_MODEL_TARGET_PATH)):
     print('---- Training target generator ----')
