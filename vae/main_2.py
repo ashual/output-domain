@@ -126,8 +126,7 @@ def train_source_generator_and_discriminator():
                 counter = train_discriminator(source_batch, target_batch, running_counter, counter)
 
             if counter % 2 == 1:
-                train_source_generator(source_batch, running_counter, times, counter)
-                counter += 1
+                times, counter = train_source_generator(source_batch, running_counter, times, counter)
             running_counter += 1
         torch.save(source_model, SAVED_MODEL_SOURCE_PATH)
         transfer(epoch)
@@ -180,6 +179,12 @@ def train_source_generator(mnist_batch, running_counter, times, counter):
     graph.last5 = m_loss_discriminator.data[0]
     graph.add_point(running_counter, 'mnist encoder')
     # print('mnist loss discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
+    if m_loss_discriminator.data[0] < 1.:
+        counter += 1
+        times = 0
+    else:
+        times += 1
+    return times, counter
 
 
 def reset_grads():
