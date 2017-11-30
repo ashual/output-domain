@@ -215,6 +215,7 @@ else:
 if args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH):
     print('loading source model')
     source_model = torch.load(SAVED_MODEL_SOURCE_PATH)
+    discriminator_model = Discriminator(100, 100)
 else:
     source_model = SourceModel()
     discriminator_model = Discriminator(100, 100)
