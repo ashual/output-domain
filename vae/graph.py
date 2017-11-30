@@ -1,5 +1,6 @@
 from visdom import Visdom
 import numpy as np
+import datetime
 
 
 class Graph():
@@ -27,5 +28,6 @@ class Graph():
             update='append'
         )
 
-    def add_images(self, tensor, nrow=8):
-        self.viz.images(tensor.data.cpu().numpy(), nrow)
+    def add_images(self, tensor, nrow=8, title='', caption=''):
+        caption += datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.viz.images(tensor, nrow,  opts=dict(title=title, caption=caption))

@@ -12,7 +12,7 @@ def load_arguments():
     parser.add_argument('--no-cuda', action='store_true', default=False, help='enables CUDA training')
     parser.add_argument('--log-interval', type=int, default=10, metavar='N',
                         help='how many batches to wait before logging training status')
-    parser.add_argument('--resume', action='store_true', default=False, help='resume the model')
+    parser.add_argument('--resume', action='store_true', default=True, help='resume the model')
     parser.add_argument('--svhn_path', type=str, default='../data_SVHN')
     parser.add_argument('--mnist_path', type=str, default='../data_MNIST')
     parser.add_argument('--save_path', type=str, default='./saved')
