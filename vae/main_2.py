@@ -72,7 +72,7 @@ def transfer(epoch):
         sample_digit = target_model.decode(sample_digit)
         graph.add_images(sample_digit_torch.numpy(), title='source epoch {}'.format(epoch))
         graph.add_images(sample_digit.view(-1, 3, args.image_size, args.image_size).data.cpu().numpy(),
-                         title='target epoch {}'.format(epoch))
+                         title='target epoch {} - {}'.format(epoch, idx))
         # save_image(concat_data.view(len(sample_digit) * 2, 3, 28, 28),
         #            'results/source_to_target_{}_{}.png'.format(epoch, idx), nrow=len(sample_digit))
 
@@ -98,13 +98,13 @@ def train_target_generator():
 def train_source_generator_and_discriminator():
     source_model.train()
     discriminator_model.train()
+    running_counter = 0
     for epoch in range(1, args.epochs + 1):
         print('---- Epoch {} ----'.format(epoch))
         train_loader_target_iter = iter(train_loader_target)
         train_loader_source_iter = iter(train_loader_source)
         counter = 0
         times = 0
-        running_counter = 0
         while True:
             try:
                 target_batch, _ = train_loader_target_iter.next()
@@ -126,7 +126,8 @@ def train_source_generator_and_discriminator():
                 counter = train_discriminator(source_batch, target_batch, running_counter, counter)
 
             if counter % 2 == 1:
-                times, counter = train_source_generator(source_batch, running_counter, times, counter)
+                train_source_generator(source_batch, running_counter, times, counter)
+                counter += 1
             running_counter += 1
         torch.save(source_model, SAVED_MODEL_SOURCE_PATH)
         transfer(epoch)
@@ -179,12 +180,6 @@ def train_source_generator(mnist_batch, running_counter, times, counter):
     graph.last5 = m_loss_discriminator.data[0]
     graph.add_point(running_counter, 'mnist encoder')
     # print('mnist loss discriminator {:.4f}'.format(m_loss_discriminator.data[0]))
-    if times >= 10:
-        counter += 1
-        times = 0
-    else:
-        times += 1
-    return times, counter
 
 
 def reset_grads():
