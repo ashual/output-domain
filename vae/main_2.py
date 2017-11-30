@@ -108,6 +108,8 @@ def train_source_generator_and_discriminator():
             try:
                 target_batch, _ = train_loader_target_iter.next()
                 source_batch, _ = train_loader_source_iter.next()
+                if len(source_batch) != len(target_batch):
+                    continue
                 target_batch = Variable(target_batch)
                 source_batch = Variable(source_batch)
                 if args.cuda:
@@ -224,6 +226,5 @@ else:
 if not (args.resume and os.path.isfile(SAVED_MODEL_TARGET_PATH)):
     print('---- Training target generator ----')
     train_target_generator()
-if not (args.resume and os.path.isfile(SAVED_MODEL_SOURCE_PATH)):
-    print('---- Training source generator ----')
-    train_source_generator_and_discriminator()
+print('---- Training source generator ----')
+train_source_generator_and_discriminator()
