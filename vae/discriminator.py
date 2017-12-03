@@ -1,4 +1,5 @@
 import torch
+from vae.minibatch_std_concat_layer import minibatch_std_concat_layer
 import torch.nn as nn
 import torch.nn.functional as F
 
@@ -9,12 +10,12 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.use_gpu = use_gpu
         self.fc1 = nn.Linear(100, 200)
-        self.fc2 = nn.Linear(200, 200)
-        self.fc3 = nn.Linear(200, 100)
+        # self.minibatch = minibatch_std_concat_layer()
+        self.fc2 = nn.Linear(20, 100)
         self.relu = nn.ReLU()
 
     def forward(self, x):
         x = self.relu(self.fc1(x))
-        x = self.relu(self.fc2(x))
-        x = F.sigmoid(self.fc3(x))
+        # x = self.minibatch(x)
+        x = F.sigmoid(self.fc2(x))
         return x
