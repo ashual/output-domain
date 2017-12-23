@@ -3,7 +3,7 @@ from torch.nn import functional as F
 
 
 def target_loss(recon_x, x, mu, logvar, args):
-    BCE = F.binary_cross_entropy(recon_x, x.view(-1, 2352))
+    BCE = F.binary_cross_entropy(recon_x, x)
 
     # see Appendix B from VAE paper:
     # Kingma and Welling. Auto-Encoding Variational Bayes. ICLR, 2014
