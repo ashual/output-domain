@@ -314,7 +314,8 @@ for epoch in range(1, args.epochs + 1):
         sample_digit = model_fashion_mnist.encoder_only(sample_digit.view(-1, 784))
         sample_digit = model_mnist.decode(sample_digit).cpu()
         concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
-        save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
-                   'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
+        graph.draw(str(idx), concat_data.view(len(sample_digit)*2, 1, 28, 28).cpu().numpy())
+        # save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
+        #            'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
     torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
     # torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
