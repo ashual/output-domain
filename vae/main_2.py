@@ -19,10 +19,10 @@ from vae.complex_model import VAE as FashionMnistModel
 from vae.simple_model import VAE as MnistModel
 from vae.options import load_arguments
 
-SAVED_MODEL_MNIST_PATH = 'saved/MNIST.pt'
-SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST.pt'
+SAVED_MODEL_MNIST_PATH = 'saved/MNIST_a.pt'
+SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST_a.pt'
 
-lr = 1e-3
+lr = 1e-5
 graph = Graph()
 args = load_arguments()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -33,22 +33,22 @@ if args.cuda:
 
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
-train_loader_mnist = torch.utils.data.DataLoader(
+train_loader_fashion_mnist = torch.utils.data.DataLoader(
     datasets.MNIST('../data_MNIST', train=True, download=True, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
-test_loader_mnist = torch.utils.data.DataLoader(
+test_loader_fashion_mnist = torch.utils.data.DataLoader(
     datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size,
     shuffle=True, **kwargs)
 
-test_loader_mnist_iter = iter(test_loader_mnist)
 
-train_loader_fashion_mnist = torch.utils.data.DataLoader(
+train_loader_mnist = torch.utils.data.DataLoader(
     datasets.FashionMNIST('../data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
-test_loader_fashion_mnist = torch.utils.data.DataLoader(
+test_loader_mnist = torch.utils.data.DataLoader(
     datasets.FashionMNIST('../data_FashionMNIST', train=False, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
+test_loader_mnist_iter = iter(test_loader_mnist)
 test_loader_fashion_mnist_iter = iter(test_loader_fashion_mnist)
 
 
@@ -80,45 +80,6 @@ d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 
 criterion = nn.BCELoss()
 
-def train(epoch):
-    model_fashion_mnist.train()
-    train_loss = 0
-    discriminator_loss = 0
-    counter = 0
-    d_loss = None
-    train_loader_mnist_iter = iter(train_loader_mnist)
-
-    for batch_idx, (data, _) in enumerate(train_loader_fashion_mnist):
-        #train_discriminator(data, train_loader_mnist_iter)
-        # if batch_idx % 3 != 0:
-        #     continue
-        data = Variable(data)
-        if args.cuda:
-            data = data.cuda()
-        optimizer.zero_grad()
-        recon_batch = model_fashion_mnist(data)
-        z = model_fashion_mnist.encoder_only(data)
-        d_loss = None # discriminator_loss_function(discriminator_model(z))
-        if batch_idx % 10 != 9:
-            loss = generator_loss_function2(recon_batch, data)
-            loss.backward()
-        # else:
-        #
-        #     d_loss.backward()
-
-        train_loss += loss.data[0]
-        discriminator_loss += 0. #d_loss.data[0]
-        optimizer.step()
-        if batch_idx % args.log_interval == 0:
-            print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f} d loss: {:.6f}'.format(epoch,
-                                                                           batch_idx * len(data),
-                                                                           len(train_loader_fashion_mnist.dataset),
-                                                                           100. * batch_idx / len(train_loader_fashion_mnist),
-                                                                           loss.data[0] / len(data),
-                                                                           0 / len(data)))
-
-    print('====> Epoch: {} Average loss: {:.4f}'.format(epoch, train_loss / len(train_loader_fashion_mnist.dataset)))
-
 
 def test(epoch):
     model_fashion_mnist.eval()
@@ -149,40 +110,6 @@ def test(epoch):
     #         save_image(comparison.data.cpu(), 'results/{}_reconstruction_{}.png'.format('FASHION_MNIST', epoch), nrow=n)
     # test_loss /= len(test_loader_mnist.dataset)
     # print('====> Test fashion mnist loss: {:.6f}'.format(test_loss))
-
-
-def train_discriminator(data, train_loader_mnist_iter):
-    data = Variable(data)
-
-    # Sample data
-    mnist_data, _ = train_loader_mnist_iter.next()
-    D_optimizer.zero_grad()
-    mnist_data = Variable(mnist_data)
-
-    # Dicriminator forward-loss-backward-update
-    z_data = model_fashion_mnist.encoder_only(data)
-    z_mnist_data = model_mnist.encoder_only(mnist_data)
-    D_real = discriminator_model(z_mnist_data)
-    D_fake = discriminator_model(z_data)
-
-    D_loss = -(torch.mean(D_real) - torch.mean(D_fake))
-    if D_loss.data.numpy()[0] < -1.:
-        print('.', end='')
-        return
-    print('T', end='')
-    D_loss.backward()
-    D_optimizer.step()
-
-    # Weight clipping
-    # for p in discriminator_model.parameters():
-    #     p.data.clamp_(-0.01, 0.01)
-
-    # Housekeeping - reset gradient
-
-    # print(
-    #     'loss D_real {:.4f}, loss D_fake {:.4f}, total loss: {:.4f}'.format(torch.mean(D_real).data.numpy()[0],
-    #                                                                         torch.mean(D_fake).data.numpy()[0],
-    #                                                                         D_loss.data.numpy()[0]))
 
 
 def reset_grads():
@@ -224,20 +151,20 @@ for epoch in range(1, args.epochs + 1):
         # Train generators
         if counter % 3 == 0:
             counter += 1
-            continue
-            # decode_f, mu_f, logvar_f, _ = model_fashion_mnist(fashion_batch)
-            # f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
-            # f_loss.backward()
-            # fashion_optimizer.step()
 
-            decode_m, z_m = model_mnist(mnist_batch)
-            m_loss_generator = mnist_loss(decode_m, mnist_batch)
-            m_loss_generator.backward()
-            mnist_optimizer.step()
+            decode_f, mu_f, logvar_f, _ = model_fashion_mnist(fashion_batch)
+            f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
+            f_loss.backward()
+            fashion_optimizer.step()
+
+            # decode_m, z_m = model_mnist(mnist_batch)
+            # m_loss_generator = mnist_loss(decode_m, mnist_batch)
+            # m_loss_generator.backward()
+            # mnist_optimizer.step()
 
             if running_counter % 100 == 0:
-                graph.last1 = 0. #f_loss.data[0]
-                graph.last2 = m_loss_generator.data[0]
+                graph.last1 = f_loss.data[0]
+                graph.last2 = 0.  # m_loss_generator.data[0]
                 graph.add_point(running_counter, 'generator')
             # print('fashion lost {:.4f}'.format(f_loss.data[0]))
             # print('mnist lost {:.4f}'.format(m_loss_generator.data[0]))
@@ -298,12 +225,12 @@ for epoch in range(1, args.epochs + 1):
                 times += 1
         running_counter += 1
     # ---------- Test --------------
-    test(epoch)
+    # test(epoch)
     try:
         sample, labels = test_loader_mnist_iter.next()
     except Exception:
         test_loader_mnist_iter = iter(test_loader_mnist)
-        sample, labels = test_loader_fashion_mnist_iter.next()
+        sample, labels = test_loader_mnist_iter.next()
     for idx in range(10):
         one_digit = np.where(labels.numpy() == idx)[0]
         sample_digit = sample.numpy()[one_digit]
