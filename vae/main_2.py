@@ -272,8 +272,8 @@ for epoch in range(1, args.epochs + 1):
             graph.last3 = d_real_error.data[0]
             graph.last4 = d_fake_error.data[0]
             graph.add_point(running_counter, 'discriminator')
-            # print('d lost real {:.4f}'.format(d_real_error.data[0]))
-            # print('d lost fake {:.4f}'.format(d_fake_error.data[0]))
+            print('d lost real {:.4f}'.format(d_real_error.data[0]))
+            print('d lost fake {:.4f}'.format(d_fake_error.data[0]))
 
             if d_real_error.data[0] < 0.3 and d_fake_error.data[0] < 0.3:
                 counter += 1

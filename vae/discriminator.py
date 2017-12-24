@@ -46,8 +46,9 @@ class Discriminator(nn.Module):
             out_tensor.append(out_i)
 
         out_T = torch.cat(tuple(out_tensor)).view(Ms.size()[0], self.n_B)
+        out_T = out_T - torch.mean(out_T)
         x = torch.cat((x, out_T), 1)
         # #### Minibatch Discrimination ###
-
-        x = F.sigmoid(self.fc3(x))
+        x = self.fc3(x)
+        x = F.sigmoid(x)
         return x
