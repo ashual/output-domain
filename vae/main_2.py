@@ -86,7 +86,7 @@ criterion = nn.BCELoss()
 
 def test_matching():
     n_categories = 10
-    confusion = torch.zeros(n_categories, n_categories)
+    confusion = torch.zeros(n_categories, n_categories).cpu()
     test_loader_mnist_iter = iter(test_loader_mnist)
     for i in range(20):
         sample, labels = test_loader_mnist_iter.next()
@@ -94,7 +94,7 @@ def test_matching():
         if args.cuda:
             sample_digit = sample_digit.cuda()
         sample_digit = model_mnist.encoder_only(sample_digit.view(-1, 784))
-        sample_digit = model_fashion_mnist.decode(sample_digit).cpu()
+        sample_digit = model_fashion_mnist.decode(sample_digit)
         results = classifyMNIST.test(sample_digit)
         for i, label in enumerate(labels):
             confusion[label][results[i]] += 1
