@@ -234,7 +234,11 @@ for epoch in range(1, args.epochs + 1):
             d_fake_m = discriminator_model(z_m)[:, 0]
             size = d_fake_m.size()[0]
 
-            m_loss_discriminator = criterion(d_fake_m, Variable(torch.ones(size)))
+            ones = Variable(torch.ones(size))
+            if args.cuda:
+                ones = ones.cuda()
+
+            m_loss_discriminator = criterion(d_fake_m, ones)
             m_loss_discriminator.backward()
             mnist_optimizer_encoder.step()
             graph.last5 = m_loss_discriminator.data[0]
