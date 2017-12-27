@@ -18,16 +18,19 @@ from vae.loss import simple_loss_function as mnist_loss
 from vae.complex_model import VAE as FashionMnistModel
 from vae.simple_model import VAE as MnistModel
 from vae.options import load_arguments
+from mnist_classifier.classify import ClassifyMNIST
+from vae.plot import plot_results, calculate_accuracy
 
-SAVED_MODEL_MNIST_PATH = 'saved/MNIST_a.pt'
-SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST_a.pt'
+SAVED_MODEL_MNIST_PATH = 'saved/MNIST.pt'
+SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST.pt'
 
-lr = 1e-5
+lr = 1e-4
 graph = Graph()
 args = load_arguments()
 args.cuda = not args.no_cuda and torch.cuda.is_available()
 
 torch.manual_seed(args.seed)
+classifyMNIST = ClassifyMNIST(args)
 if args.cuda:
     torch.cuda.manual_seed(args.seed)
 
@@ -81,6 +84,24 @@ d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 criterion = nn.BCELoss()
 
 
+def test_matching():
+    n_categories = 10
+    confusion = torch.zeros(n_categories, n_categories)
+    test_loader_mnist_iter = iter(test_loader_mnist)
+    for i in range(20):
+        sample, labels = test_loader_mnist_iter.next()
+        sample_digit = Variable(sample)
+        if args.cuda:
+            sample_digit = sample_digit.cuda()
+        sample_digit = model_mnist.encoder_only(sample_digit.view(-1, 784))
+        sample_digit = model_fashion_mnist.decode(sample_digit).cpu()
+        results = classifyMNIST.test(sample_digit)
+        for i, label in enumerate(labels):
+            confusion[label][results[i]] += 1
+    # plot_results(confusion)
+    return calculate_accuracy(confusion)
+
+
 def test(epoch):
     model_fashion_mnist.eval()
     test_loss = 0.
@@ -123,6 +144,7 @@ def reset_grads():
 
 
 running_counter = 0
+overall_accuracy = 0.
 for epoch in range(1, args.epochs + 1):
     print('---- Epoch {} ----'.format(epoch))
     model_fashion_mnist.train()
@@ -150,7 +172,7 @@ for epoch in range(1, args.epochs + 1):
 
         # Train generators
         if counter % 3 == 0:
-            counter += 1
+            # counter += 1
 
             decode_f, mu_f, logvar_f, _ = model_fashion_mnist(fashion_batch)
             f_loss = fashion_loss(decode_f, fashion_batch, mu_f, logvar_f, args)
@@ -176,9 +198,9 @@ for epoch in range(1, args.epochs + 1):
 
         # Train Discriminator
         if counter % 3 == 1:
-            _, mu_f, _, z_f = model_fashion_mnist(fashion_batch)
-            mu_f = mu_f.detach()
-            _, z_m = model_mnist(mnist_batch)
+            _, _, _, z_f = model_fashion_mnist(fashion_batch)
+            z_f = z_f.detach()
+            z_m = model_mnist.encoder_only(mnist_batch)
             z_m = z_m.detach()
 
             d_real_decision = discriminator_model(z_f)[:, 0]
@@ -199,8 +221,8 @@ for epoch in range(1, args.epochs + 1):
             graph.last3 = d_real_error.data[0]
             graph.last4 = d_fake_error.data[0]
             graph.add_point(running_counter, 'discriminator')
-            print('d lost real {:.4f}'.format(d_real_error.data[0]))
-            print('d lost fake {:.4f}'.format(d_fake_error.data[0]))
+            # print('d lost real {:.4f}'.format(d_real_error.data[0]))
+            # print('d lost fake {:.4f}'.format(d_fake_error.data[0]))
 
             if d_real_error.data[0] < 0.3 and d_fake_error.data[0] < 0.3:
                 counter += 1
@@ -234,6 +256,8 @@ for epoch in range(1, args.epochs + 1):
     for idx in range(10):
         one_digit = np.where(labels.numpy() == idx)[0]
         sample_digit = sample.numpy()[one_digit]
+        if len(sample_digit) == 0:
+            continue
         sample_digit_torch = torch.FloatTensor(sample_digit)
         sample_digit = Variable(sample_digit_torch)
         # save_image(sample_digit.data.view(len(sample_digit), 1, 28, 28),
@@ -246,5 +270,11 @@ for epoch in range(1, args.epochs + 1):
         graph.draw(str(idx), concat_data.view(len(sample_digit)*2, 1, 28, 28).cpu().numpy())
         # save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
         #            'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
+    certain, sparse = test_matching()
+    accuracy = certain + sparse
+    print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
+    if accuracy > overall_accuracy:
+        overall_accuracy = accuracy
+        print('saving mnist model')
+        torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
     torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
-    torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
