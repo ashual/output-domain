@@ -21,8 +21,8 @@ from vae.options import load_arguments
 from mnist_classifier.classify import ClassifyMNIST
 from vae.plot import plot_results, calculate_accuracy
 
-SAVED_MODEL_MNIST_PATH = 'saved/MNIST.pt'
-SAVED_MODEL_FASHION_MNIST_PATH = 'saved/FashionMNIST.pt'
+SAVED_MODEL_MNIST_PATH = 'vae/saved/MNIST.pt'
+SAVED_MODEL_FASHION_MNIST_PATH = 'vae/saved/FashionMNIST.pt'
 
 lr = 1e-4
 graph = Graph()
@@ -37,18 +37,18 @@ if args.cuda:
 kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 
 train_loader_fashion_mnist = torch.utils.data.DataLoader(
-    datasets.MNIST('../data_MNIST', train=True, download=True, transform=transforms.ToTensor()),
+    datasets.MNIST('./data_MNIST', train=True, download=True, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader_fashion_mnist = torch.utils.data.DataLoader(
-    datasets.MNIST('../data_MNIST', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size,
+    datasets.MNIST('./data_MNIST', train=False, transform=transforms.ToTensor()), batch_size=args.batch_size,
     shuffle=True, **kwargs)
 
 
 train_loader_mnist = torch.utils.data.DataLoader(
-    datasets.FashionMNIST('../data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()),
+    datasets.FashionMNIST('./data_FashionMNIST', train=True, download=True, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 test_loader_mnist = torch.utils.data.DataLoader(
-    datasets.FashionMNIST('../data_FashionMNIST', train=False, transform=transforms.ToTensor()),
+    datasets.FashionMNIST('./data_FashionMNIST', train=False, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
 
 test_loader_mnist_iter = iter(test_loader_mnist)
@@ -114,7 +114,7 @@ def test(epoch):
         if i == 0:
             n = min(data.size(0), 8)
             comparison = torch.cat([data[:n], recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
-            save_image(comparison.data.cpu(), 'results/{}_reconstruction_{}.png'.format('MNIST', epoch), nrow=n)
+            save_image(comparison.data.cpu(), 'vae/results/{}_reconstruction_{}.png'.format('MNIST', epoch), nrow=n)
     test_loss /= len(test_loader_mnist.dataset)
     print('====> Test mnist loss: {:.6f}'.format(test_loss))
     test_loss = 0.
@@ -269,7 +269,7 @@ for epoch in range(1, args.epochs + 1):
         concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
         graph.draw(str(idx), concat_data.view(len(sample_digit)*2, 1, 28, 28).cpu().numpy())
         # save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
-        #            'results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
+        #            'vae/results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
     certain, sparse = test_matching()
     accuracy = certain + sparse
     print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))

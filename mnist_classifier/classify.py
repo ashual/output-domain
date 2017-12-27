@@ -8,8 +8,8 @@ from torchvision import datasets, transforms
 
 from mnist_classifier.model import Net
 
-GPU_FILE = '../mnist_classifier/model_gpu_1.pt'
-CPU_FILE = '../mnist_classifier/model_cpu_1.pt'
+GPU_FILE = './mnist_classifier/model_gpu_1.pt'
+CPU_FILE = './mnist_classifier/model_cpu_1.pt'
 
 
 class ClassifyMNIST:
@@ -33,7 +33,7 @@ class ClassifyMNIST:
     def train(self):
         args = self.args
         kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
-        train_loader = torch.utils.data.DataLoader(datasets.MNIST('../data', train=True, download=True,
+        train_loader = torch.utils.data.DataLoader(datasets.MNIST('./data', train=True, download=True,
                                                                   transform=transforms.Compose([transforms.ToTensor(),
                                                                                                 transforms.Normalize(
                                                                                                     (0.1307,),
