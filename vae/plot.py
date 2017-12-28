@@ -31,17 +31,18 @@ def calculate_accuracy(confusion):
     return certain, sparse
 
 
-def plot_results(confusion):
-    certain, sparse = calculate_accuracy(confusion)
-    print('accuracy: {} {}'.format(certain, sparse))
+def plot_results(confusion, epoch):
+    # certain, sparse = calculate_accuracy(confusion)
+    # print('accuracy: {} {}'.format(certain, sparse))
     # Normalize by dividing every row by its sum
+    conf = confusion.float()
     for i in range(n_categories):
-        confusion[i] = confusion[i] / confusion[i].sum()
+        conf[i] = conf[i] / conf[i].sum()
 
     # Set up plot
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    cax = ax.matshow(confusion.numpy())
+    cax = ax.matshow(conf.numpy())
     fig.colorbar(cax)
 
     # Set up axes
@@ -53,4 +54,5 @@ def plot_results(confusion):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
     # sphinx_gallery_thumbnail_number = 2
-    plt.show()
+    fig.savefig('plots/plot_{}'.format(epoch))
+    # plt.show()

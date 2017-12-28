@@ -84,9 +84,9 @@ d_optimizer = optim.Adam(discriminator_model.parameters(), lr=lr)
 criterion = nn.BCELoss()
 
 
-def test_matching():
+def test_matching(epoch):
     n_categories = 10
-    confusion = torch.zeros(n_categories, n_categories).cpu()
+    confusion = torch.zeros(n_categories, n_categories).long().cpu()
     test_loader_mnist_iter = iter(test_loader_mnist)
     for i in range(20):
         sample, labels = test_loader_mnist_iter.next()
@@ -95,10 +95,10 @@ def test_matching():
             sample_digit = sample_digit.cuda()
         sample_digit = model_mnist.encoder_only(sample_digit.view(-1, 784))
         sample_digit = model_fashion_mnist.decode(sample_digit)
-        results = classifyMNIST.test(sample_digit)
+        results = classifyMNIST.test(sample_digit).cpu()
         for i, label in enumerate(labels):
             confusion[label][results[i]] += 1
-    # plot_results(confusion)
+    plot_results(confusion, epoch)
     return calculate_accuracy(confusion)
 
 
@@ -274,11 +274,11 @@ for epoch in range(1, args.epochs + 1):
         graph.draw(str(idx), concat_data.view(len(sample_digit)*2, 1, 28, 28).cpu().numpy())
         # save_image(concat_data.view(len(sample_digit)*2, 1, 28, 28),
         #            'vae/results/{}_sample_{}_{}.png'.format('MNIST', epoch, idx), nrow=len(sample_digit))
-    certain, sparse = test_matching()
+    certain, sparse = test_matching(epoch)
     accuracy = certain + sparse
     print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
     if accuracy > overall_accuracy:
         overall_accuracy = accuracy
         print('saving mnist model')
-        torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
-    torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
+    #     torch.save(model_mnist, SAVED_MODEL_MNIST_PATH)
+    # torch.save(model_fashion_mnist, SAVED_MODEL_FASHION_MNIST_PATH)
