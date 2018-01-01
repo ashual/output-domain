@@ -57,9 +57,9 @@ if args.cuda:
     model_source.cuda()
     discriminator_model.cuda()
 
-# mnist_optimizer_encoder_params = [{'params': model_target.fc1.parameters()}, {'params': model_target.fc2.parameters()}]
+# target_optimizer_encoder_params = [{'params': model_target.fc1.parameters()}, {'params': model_target.fc2.parameters()}]
 target_optimizer = optim.Adam(model_target.parameters(), lr=args.lr)
-# mnist_optimizer_encoder = optim.Adam(mnist_optimizer_encoder_params, lr=args.lr)
+# target_optimizer_encoder = optim.Adam(target_optimizer_encoder_params, lr=args.lr)
 source_optimizer = optim.Adam(model_source.parameters(), lr=args.lr)
 d_optimizer = optim.Adam(discriminator_model.parameters(), lr=args.lr)
 
@@ -78,7 +78,7 @@ def reset_grads():
     model_source.zero_grad()
     discriminator_model.zero_grad()
     target_optimizer.zero_grad()
-    # mnist_optimizer_encoder.zero_grad()
+    # target_optimizer_encoder.zero_grad()
     source_optimizer.zero_grad()
     d_optimizer.zero_grad()
 
@@ -92,8 +92,7 @@ for epoch in range(1, args.epochs + 1):
     discriminator_model.train()
 
     # ---------- Train --------------
-    for i, ((source_input, source_labels), (target_input, target_labels)) in enumerate(
-            zip(train_loader_source, train_loader_target)):
+    for i, ((source_input, _), (target_input, _)) in enumerate(zip(train_loader_source, train_loader_target)):
         running_counter += 1
         if source_input.size()[0] is not target_input.size()[0]:
             continue
@@ -135,7 +134,7 @@ for epoch in range(1, args.epochs + 1):
 
         s_loss.backward()
         source_optimizer.step()
-        t_loss_generator.backward()
+        t_loss.backward()
         target_optimizer.step()
 
         reset_grads()
@@ -171,5 +170,7 @@ for epoch in range(1, args.epochs + 1):
     if accuracy > overall_accuracy:
         overall_accuracy = accuracy
         print('saving mnist model')
+        if not os.path.isdir('results/{}'.format(args.graph_name)):
+            os.mkdir('results/{}'.format(args.graph_name))
         torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
         torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))
