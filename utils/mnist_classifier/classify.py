@@ -3,13 +3,13 @@ import os
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torch
-import torch.optim as optim
+from torch import optim
 from torchvision import datasets, transforms
 
-from mnist_classifier.model import Net
+from utils.mnist_classifier.model import Net
 
-GPU_FILE = './mnist_classifier/model_gpu_1.pt'
-CPU_FILE = './mnist_classifier/model_cpu_1.pt'
+GPU_FILE = './utils/mnist_classifier/model_gpu.pt'
+CPU_FILE = './utils/mnist_classifier/model_cpu.pt'
 
 
 class ClassifyMNIST:

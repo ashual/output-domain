@@ -1,6 +1,7 @@
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
-import torch
 import numpy as np
 
 digits_categories = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -26,12 +27,15 @@ def calculate_accuracy(confusion):
     conf_T = conf.T
 
     certain = np.sum((conf / conf.sum(axis=1)[:, None])**2) / len(conf)
-    sparse = np.sum((conf_T / conf_T.sum(axis=1)[:, None])**2) / len(conf)
+    try:
+        sparse = np.sum((conf_T / conf_T.sum(axis=1)[:, None])**2) / len(conf)
+    except RuntimeWarning:
+        sparse = 0
 
     return certain, sparse
 
 
-def plot_results(confusion, epoch):
+def plot_results(confusion, graph):
     # certain, sparse = calculate_accuracy(confusion)
     # print('accuracy: {} {}'.format(certain, sparse))
     # Normalize by dividing every row by its sum
@@ -54,5 +58,10 @@ def plot_results(confusion, epoch):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
     # sphinx_gallery_thumbnail_number = 2
-    fig.savefig('plots/plot_{}'.format(epoch))
+    fig.canvas.draw()
+    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3, 1))
+    data = np.moveaxis(data, -2, 0)
+    data = np.moveaxis(data, -1, 0)
+    graph.draw('plot', data)
     # plt.show()

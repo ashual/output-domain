@@ -8,15 +8,15 @@ from torch import optim
 from torch.autograd import Variable
 
 from data_loader import get_data_loader
-from mnist_classifier.classify import ClassifyMNIST
-from vae.tests import Tests
-from vae.complex_model import VAE as SourceModel
-from vae.simple_model import VAE as TargetModel
-from vae.discriminator import Discriminator
-from vae.graph import Graph
-from vae.loss import complex_loss_function as source_loss
-from vae.loss import simple_loss_function as target_loss
-from vae.options import load_arguments
+from utils.mnist_classifier.classify import ClassifyMNIST
+from tests import Tests
+from models.complex_model import VAE as SourceModel
+from models.simple_model import VAE as TargetModel
+from models.discriminator import Discriminator
+from utils.graph import Graph
+from utils.loss import complex_loss_function as source_loss
+from utils.loss import simple_loss_function as target_loss
+from options import load_arguments
 
 
 args = load_arguments()
@@ -37,17 +37,19 @@ elif args.source == 'fashionMnist':
 else:
     raise Exception('args.source does not defined')
 
-if args.resume and os.path.isfile(args.model_target_path):
-    print('loading target model')
+if not (args.resume and os.path.isfile(args.model_target_path)):
+    print('Creating new target model')
     model_target = TargetModel()
 else:
+    print('Loading target model from {}'.format(args.model_target_path))
     model_target = torch.load(args.model_target_path)
 
-if args.resume and os.path.isfile(args.model_source_path):
-    print('loading source model')
-    model_source = torch.load(args.model_source_path)
-else:
+if not (args.resume and os.path.isfile(args.model_source_path)):
+    print('Creating new source model')
     model_source = SourceModel()
+else:
+    print('Loading source model from'.format(args.model_source_path))
+    model_source = torch.load(args.model_source_path)
 discriminator_model = Discriminator(20, 20)
 
 if args.cuda:
@@ -93,6 +95,7 @@ for epoch in range(1, args.epochs + 1):
     for i, ((source_input, source_labels), (target_input, target_labels)) in enumerate(
             zip(train_loader_source, train_loader_target)):
         running_counter += 1
+        break
         if source_input.size()[0] is not target_input.size()[0]:
             continue
         source_input = Variable(source_input)

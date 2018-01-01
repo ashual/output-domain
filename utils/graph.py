@@ -1,5 +1,6 @@
-from visdom import Visdom
 import numpy as np
+import plotly.tools as tls
+from visdom import Visdom
 
 
 class Graph:
@@ -17,12 +18,9 @@ class Graph:
 
     def add_point(self, x, var_name='all'):
         if var_name not in self.plots:
-            self.plots[var_name] = self.viz.line(
-                X=np.column_stack((x, x, x, x, x)),
-                Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5)),
-                env=self.env,
-                opts=dict(legend=self.legend)
-            )
+            self.plots[var_name] = self.viz.line(X=np.column_stack((x, x, x, x, x)),
+                Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5)), env=self.env,
+                opts=dict(legend=self.legend))
         else:
             self.viz.updateTrace(X=np.column_stack((x, x, x, x, x)),
                                  Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5)),
@@ -33,3 +31,7 @@ class Graph:
             self.plots[var_name] = self.viz.images(images, env=self.env, opts=dict(caption=var_name))
         else:
             self.viz.images(images, env=self.env, win=self.plots[var_name], opts=dict(caption=var_name))
+
+    def draw_figure(self, fig):
+        plotly_fig = tls.mpl_to_plotly(fig)
+        self.viz._send(dict(data=plotly_fig.data, layout=plotly_fig.layout,))

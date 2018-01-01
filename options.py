@@ -1,6 +1,7 @@
 import argparse
 import pprint
 import sys
+import datetime
 
 
 def load_arguments():
@@ -9,7 +10,7 @@ def load_arguments():
                         help='input batch size for training (default: 128)')
     parser.add_argument('--source', type=str, default='mnist',
                         help='From mnist to fashionMnist or otherwise (default: mnist)')
-    parser.add_argument('--graph_name', type=str, default='output_domain', help='Graph environment name')
+    parser.add_argument('--graph_name', type=str, default='', help='Graph environment name (default: dateAndTime)')
     parser.add_argument('--one_sided', action='store_true', default=False, help='Do not train target domain')
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('--no-cuda', action='store_true', default=False, help='enables CUDA training')
@@ -21,6 +22,9 @@ def load_arguments():
     parser.add_argument('--model_target_path', type=str, default='vae/saved/MNIST.pt')
     parser.add_argument('--model_source_path', type=str, default='vae/saved/FashionMNIST.pt')
     args = parser.parse_args()
+
+    if not args.graph_name:
+        args.graph_name = datetime.datetime.now().strftime("%d-%m_%H:%M")
     print('-' * 10)
     pp = pprint.PrettyPrinter(indent=4)
     pp.pprint(vars(args))

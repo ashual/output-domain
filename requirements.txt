@@ -1,0 +1,7 @@
+torch
+torchvision
+six
+visdom
+numpy
+plotly
+matplotlib

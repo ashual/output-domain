@@ -127,10 +127,8 @@ venv.bak/
 .nfs*
 
 # pytorch files
-data_FashionMNIST/
-data_MNIST/
-vae/saved/
-ok_results/
-encoder_trained_results/
-data_SVHN/
 results/
+plots/
+data/
+archive/
+utils/mnist_classifier/*.pt
