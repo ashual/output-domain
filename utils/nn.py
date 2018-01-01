@@ -18,6 +18,6 @@ for i, sample in enumerate(data):
         raise Exception('same')
     if train_labels[nn_index] == train_labels[i]:
         counter += 1
-    if i%100 == 0:
+    if i % 100 == 0:
         print('\r {}\{} {}'.format(i, len(data), counter/(i+1)))
 print(counter/len(data))

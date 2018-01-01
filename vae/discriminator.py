@@ -5,11 +5,10 @@ import torch.nn.functional as F
 
 class Discriminator(nn.Module):
 
-    def __init__(self, n_B, n_C, use_gpu=False):
+    def __init__(self, n_B, n_C):
         super(Discriminator, self).__init__()
         self.n_B = n_B
         self.n_C = n_C
-        self.use_gpu = use_gpu
         self.num_channels = 20
 
         self.fc1 = nn.Linear(20, 128)
