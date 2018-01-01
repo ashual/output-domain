@@ -10,20 +10,23 @@ class Graph:
         self.last3 = 0.
         self.last4 = 0.
         self.last5 = 0.
+        self.last6 = 0.
         self.x = 0.
-        self.legend = ['source', 'target', 'd loss real (fashion)', 'd loss fake(mnist)', 'mnist d loss']
+        self.legend = ['source_generator', 'target_generator', 'source_disc', 'target_disc', 'disc source',
+                       'disc target']
         self.viz = Visdom()
         self.env = env
         self.plots = {}
 
     def add_point(self, x, var_name='all'):
         if var_name not in self.plots:
-            self.plots[var_name] = self.viz.line(X=np.column_stack((x, x, x, x, x)),
-                Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5)), env=self.env,
-                opts=dict(legend=self.legend))
+            self.plots[var_name] = self.viz.line(X=np.column_stack((x, x, x, x, x, x)),
+                Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5, self.last6)),
+                                                 env=self.env, opts=dict(legend=self.legend))
         else:
-            self.viz.updateTrace(X=np.column_stack((x, x, x, x, x)),
-                                 Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5)),
+            self.viz.updateTrace(X=np.column_stack((x, x, x, x, x, x)),
+                                 Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5,
+                                                    self.last6)),
                                  env=self.env, win=self.plots[var_name])
 
     def draw(self, var_name, images):

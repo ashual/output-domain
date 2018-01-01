@@ -29,7 +29,7 @@ def calculate_accuracy(confusion):
     certain = np.sum((conf / conf.sum(axis=1)[:, None])**2) / len(conf)
     try:
         sparse = np.sum((conf_T / conf_T.sum(axis=1)[:, None])**2) / len(conf)
-    except RuntimeWarning:
+    except Exception:
         sparse = 0
 
     return certain, sparse

@@ -57,9 +57,9 @@ if args.cuda:
     model_source.cuda()
     discriminator_model.cuda()
 
-mnist_optimizer_encoder_params = [{'params': model_target.fc1.parameters()}, {'params': model_target.fc2.parameters()}]
+# mnist_optimizer_encoder_params = [{'params': model_target.fc1.parameters()}, {'params': model_target.fc2.parameters()}]
 target_optimizer = optim.Adam(model_target.parameters(), lr=args.lr)
-mnist_optimizer_encoder = optim.Adam(mnist_optimizer_encoder_params, lr=args.lr)
+# mnist_optimizer_encoder = optim.Adam(mnist_optimizer_encoder_params, lr=args.lr)
 source_optimizer = optim.Adam(model_source.parameters(), lr=args.lr)
 d_optimizer = optim.Adam(discriminator_model.parameters(), lr=args.lr)
 
@@ -78,7 +78,7 @@ def reset_grads():
     model_source.zero_grad()
     discriminator_model.zero_grad()
     target_optimizer.zero_grad()
-    mnist_optimizer_encoder.zero_grad()
+    # mnist_optimizer_encoder.zero_grad()
     source_optimizer.zero_grad()
     d_optimizer.zero_grad()
 
@@ -109,21 +109,37 @@ for epoch in range(1, args.epochs + 1):
             ones = ones.cuda()
             zeros = zeros.cuda()
 
-        # Train generators
         reset_grads()
+        # Train generators
         decode_s, mu_s, logvar_s, z_s = model_source(source_input)
-        s_loss = source_loss(decode_s, source_input, mu_s, logvar_s, args)
-        s_loss.backward()
-        source_optimizer.step()
+        s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
 
         decode_t, z_t = model_target(target_input)
         t_loss_generator = target_loss(decode_t, target_input)
-        if not args.one_sided:
-            t_loss_generator.backward()
-            target_optimizer.step()
 
-        # Train Discriminator
+        # Train encoder
+        d_fake_t = discriminator_model(z_t)[:, 0]
+        t_loss_discriminator = criterion(d_fake_t, ones)
+        if args.one_sided:
+            t_loss = t_loss_discriminator
+        else:
+            t_loss = t_loss_generator + 3*t_loss_discriminator
+
+        d_fake_s = discriminator_model(z_s)[:, 0]
+        s_loss_discriminator = criterion(d_fake_s, zeros)
+
+        if args.apply_source_to_discriminator:
+            s_loss = s_loss_generator + 3*s_loss_discriminator
+        else:
+            s_loss = s_loss_generator
+
+        s_loss.backward()
+        source_optimizer.step()
+        t_loss_generator.backward()
+        target_optimizer.step()
+
         reset_grads()
+        # Train Discriminator
         z_s = z_s.detach()
         d_real_decision = discriminator_model(z_s)[:, 0]
         d_real_error = criterion(d_real_decision, ones)  # ones = true
@@ -138,20 +154,13 @@ for epoch in range(1, args.epochs + 1):
         # for p in discriminator_model.parameters():
         #     p.data.clamp_(-0.1, 0.1)
 
-        # Train encoder
-        reset_grads()
-        z_m = model_target.encoder_only(target_input)
-        d_fake_m = discriminator_model(z_m)[:, 0]
-        m_loss_discriminator = criterion(d_fake_m, ones)
-        m_loss_discriminator.backward()
-        mnist_optimizer_encoder.step()
-
-        graph.last1 = s_loss.data[0]
+        graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = d_real_error.data[0]
-        graph.last4 = d_fake_error.data[0]
-        graph.last5 = m_loss_discriminator.data[0]
-        graph.add_point(running_counter, 'mnist encoder')
+        graph.last3 = s_loss_discriminator.data[0]
+        graph.last4 = t_loss_discriminator.data[0]
+        graph.last5 = d_real_error.data[0]
+        graph.last6 = d_fake_error.data[0]
+        graph.add_point(running_counter)
 
     # ---------- Tests --------------
     tests.reconstruction(epoch)
