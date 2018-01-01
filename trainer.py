@@ -123,13 +123,13 @@ for epoch in range(1, args.epochs + 1):
         if args.one_sided:
             t_loss = t_loss_discriminator
         else:
-            t_loss = t_loss_generator + 3*t_loss_discriminator
+            t_loss = t_loss_generator + t_loss_discriminator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
         s_loss_discriminator = criterion(d_fake_s, zeros)
 
         if args.apply_source_to_discriminator:
-            s_loss = s_loss_generator + 3*s_loss_discriminator
+            s_loss = s_loss_generator + s_loss_discriminator
         else:
             s_loss = s_loss_generator
 
@@ -171,3 +171,5 @@ for epoch in range(1, args.epochs + 1):
     if accuracy > overall_accuracy:
         overall_accuracy = accuracy
         print('saving mnist model')
+        torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
+        torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))

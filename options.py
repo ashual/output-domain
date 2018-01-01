@@ -19,8 +19,8 @@ def load_arguments():
                         help='how many batches to wait before logging training status')
     parser.add_argument('--resume', action='store_true', default=False, help='resume the model (default: False)')
     parser.add_argument('--lr', type=float, default=0.0001, help='learning rate (default: 0.0001)')
-    parser.add_argument('--model_target_path', type=str, default='vae/saved/MNIST.pt')
-    parser.add_argument('--model_source_path', type=str, default='vae/saved/FashionMNIST.pt')
+    parser.add_argument('--model_target_path', type=str, default='')
+    parser.add_argument('--model_source_path', type=str, default='')
     parser.add_argument('--apply_source_to_discriminator', action='store_true', default=False,
                         help='Apply discriminator loss to source')
     args = parser.parse_args()
