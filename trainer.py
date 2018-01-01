@@ -95,7 +95,6 @@ for epoch in range(1, args.epochs + 1):
     for i, ((source_input, source_labels), (target_input, target_labels)) in enumerate(
             zip(train_loader_source, train_loader_target)):
         running_counter += 1
-        break
         if source_input.size()[0] is not target_input.size()[0]:
             continue
         source_input = Variable(source_input)
