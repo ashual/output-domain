@@ -122,7 +122,7 @@ for epoch in range(1, args.epochs + 1):
         if args.one_sided:
             t_loss = t_loss_discriminator
         else:
-            t_loss = t_loss_generator + t_loss_discriminator
+            t_loss = t_loss_generator + 0.2 * t_loss_discriminator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
         s_loss_discriminator = criterion(d_fake_s, zeros)
