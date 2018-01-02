@@ -48,7 +48,7 @@ if not (args.resume and os.path.isfile(args.model_source_path)):
     print('Creating new source model')
     model_source = SourceModel()
 else:
-    print('Loading source model from'.format(args.model_source_path))
+    print('Loading source model from {}'.format(args.model_source_path))
     model_source = torch.load(args.model_source_path)
 discriminator_model = Discriminator(20, 20)
 
@@ -162,16 +162,17 @@ for epoch in range(1, args.epochs + 1):
         graph.add_point(running_counter)
 
     # ---------- Tests --------------
-    tests.reconstruction(epoch)
-    tests.source_to_target_test(epoch)
+    tests.source_to_target_test()
     tests.tsne()
-    certain, sparse = tests.test_matching(epoch)
-    accuracy = certain + sparse
-    print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
-    if epoch > 10 and accuracy > overall_accuracy:
-        overall_accuracy = accuracy
-        print('saving mnist model')
-        if not os.path.isdir('results/{}'.format(args.graph_name)):
-            os.mkdir('results/{}'.format(args.graph_name))
-        torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
-        torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))
+    if not args.one_sided:
+        tests.reconstruction(epoch)
+        certain, sparse = tests.test_matching()
+        accuracy = certain + sparse
+        print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
+        if epoch > 10 and accuracy > overall_accuracy:
+            overall_accuracy = accuracy
+            print('saving mnist model')
+            if not os.path.isdir('results/{}'.format(args.graph_name)):
+                os.mkdir('results/{}'.format(args.graph_name))
+    torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
+    torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))

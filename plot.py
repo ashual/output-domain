@@ -59,4 +59,5 @@ def plot_results(confusion, graph):
 
     # sphinx_gallery_thumbnail_number = 2
     graph.draw_figure('matching plot', fig)
+    plt.close(fig)
     # plt.show()

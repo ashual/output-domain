@@ -9,6 +9,7 @@ from data_loader import get_data_loader
 from plot import plot_results, calculate_accuracy
 from utils.loss import simple_loss_function
 from utils.tsne import run as run_tsne
+import matplotlib.pyplot as plt
 
 
 class Tests:
@@ -22,9 +23,17 @@ class Tests:
         self.graph = graph
         self.cuda = args.cuda
 
-    def source_to_target_test(self, epoch):
+    def source_to_target_test(self):
+        if self.args.one_sided:
+            test_loader = self.test_loader_target
+            model_target = self.model_source
+            model_source = self.model_target
+        else:
+            test_loader = self.test_loader_source
+            model_source = self.model_source
+            model_target = self.model_target
         self.model_source.eval()
-        for i, (sample, labels) in enumerate(self.test_loader_source):
+        for i, (sample, labels) in enumerate(test_loader):
             for idx in range(10):
                 one_digit = np.where(labels.numpy() == idx)[0]
                 sample_digit = sample.numpy()[one_digit]
@@ -34,13 +43,13 @@ class Tests:
                 sample_digit = Variable(sample_digit_torch)
                 if self.cuda:
                     sample_digit = sample_digit.cuda()
-                sample_digit = self.model_source.encoder_only(sample_digit.view(-1, 784))
-                sample_digit = self.model_target.decode(sample_digit).cpu()
+                sample_digit = model_source.encoder_only(sample_digit.view(-1, 784))
+                sample_digit = model_target.decode(sample_digit).cpu()
                 concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
                 self.graph.draw(str(idx), concat_data.view(len(sample_digit) * 2, 1, 28, 28).cpu().numpy())
             break
 
-    def test_matching(self, epoch):
+    def test_matching(self):
         n_categories = 10
         confusion = torch.zeros(n_categories, n_categories).long().cpu()
         for i, (sample, labels) in enumerate(self.test_loader_target):
@@ -113,5 +122,7 @@ class Tests:
                 all_t_labels = torch.cat([all_t_labels, t_labels])
         fig = run_tsne(all_enc_source.numpy(), all_s_labels.numpy())
         self.graph.draw_figure('source tsne', fig)
+        plt.close(fig)
         fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
         self.graph.draw_figure('target tsne', fig)
+        plt.close(fig)
