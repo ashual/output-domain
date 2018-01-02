@@ -58,10 +58,5 @@ def plot_results(confusion, graph):
     ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
 
     # sphinx_gallery_thumbnail_number = 2
-    fig.canvas.draw()
-    data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    data = data.reshape(fig.canvas.get_width_height()[::-1] + (3, 1))
-    data = np.moveaxis(data, -2, 0)
-    data = np.moveaxis(data, -1, 0)
-    graph.draw('plot', data)
+    graph.draw_figure('matching plot', fig)
     # plt.show()

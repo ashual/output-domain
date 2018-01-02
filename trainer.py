@@ -122,7 +122,7 @@ for epoch in range(1, args.epochs + 1):
         if args.one_sided:
             t_loss = t_loss_discriminator
         else:
-            t_loss = t_loss_generator + 0.2 * t_loss_discriminator
+            t_loss = t_loss_generator + t_loss_discriminator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
         s_loss_discriminator = criterion(d_fake_s, zeros)
@@ -164,10 +164,11 @@ for epoch in range(1, args.epochs + 1):
     # ---------- Tests --------------
     tests.reconstruction(epoch)
     tests.source_to_target_test(epoch)
+    tests.tsne()
     certain, sparse = tests.test_matching(epoch)
     accuracy = certain + sparse
     print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
-    if accuracy > overall_accuracy:
+    if epoch > 10 and accuracy > overall_accuracy:
         overall_accuracy = accuracy
         print('saving mnist model')
         if not os.path.isdir('results/{}'.format(args.graph_name)):

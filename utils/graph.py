@@ -1,5 +1,4 @@
 import numpy as np
-import plotly.tools as tls
 from visdom import Visdom
 
 
@@ -35,6 +34,10 @@ class Graph:
         else:
             self.viz.images(images, env=self.env, win=self.plots[var_name], opts=dict(caption=var_name))
 
-    def draw_figure(self, fig):
-        plotly_fig = tls.mpl_to_plotly(fig)
-        self.viz._send(dict(data=plotly_fig.data, layout=plotly_fig.layout,))
+    def draw_figure(self, var_name, fig):
+        fig.canvas.draw()
+        data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+        data = data.reshape(fig.canvas.get_width_height()[::-1] + (3, 1))
+        data = np.moveaxis(data, -2, 0)
+        data = np.moveaxis(data, -1, 0)
+        self.draw(var_name, data)

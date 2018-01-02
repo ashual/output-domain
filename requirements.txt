@@ -5,3 +5,4 @@ visdom
 numpy
 plotly
 matplotlib
+scikit-learn
