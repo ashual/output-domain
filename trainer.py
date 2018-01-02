@@ -171,8 +171,8 @@ for epoch in range(1, args.epochs + 1):
         print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
         if epoch > 10 and accuracy > overall_accuracy:
             overall_accuracy = accuracy
-            print('saving mnist model')
-            if not os.path.isdir('results/{}'.format(args.graph_name)):
-                os.mkdir('results/{}'.format(args.graph_name))
+    print('saving mnist model')
+    if not os.path.isdir('results/{}'.format(args.graph_name)):
+        os.mkdir('results/{}'.format(args.graph_name))
     torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
     torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))
