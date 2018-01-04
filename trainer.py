@@ -39,7 +39,7 @@ else:
 
 if not (args.resume and os.path.isfile(args.model_target_path)):
     print('Creating new target model')
-    model_target = TargetModel()
+    model_target = SourceModel()
 else:
     print('Loading target model from {}'.format(args.model_target_path))
     model_target = torch.load(args.model_target_path)
@@ -113,8 +113,8 @@ for epoch in range(1, args.epochs + 1):
         decode_s, mu_s, logvar_s, z_s = model_source(source_input)
         s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
 
-        decode_t, z_t = model_target(target_input)
-        t_loss_generator = target_loss(decode_t, target_input)
+        decode_t, mu_t, logvar_t, z_t = model_target(target_input)
+        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
 
         # Train encoder
         d_fake_t = discriminator_model(z_t)[:, 0]
@@ -125,7 +125,7 @@ for epoch in range(1, args.epochs + 1):
             t_loss = t_loss_generator + t_loss_discriminator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
-        s_loss_discriminator = criterion(d_fake_s, zeros)
+        s_loss_discriminator = criterion(d_fake_s, ones)
 
         if args.apply_source_to_discriminator:
             s_loss = s_loss_generator + s_loss_discriminator

@@ -76,7 +76,7 @@ class Tests:
                 source = source.cuda()
                 target = target.cuda()
             recon_source, _, _, _ = self.model_source(source)
-            recon_target, _ = self.model_target(target)
+            recon_target, _, _, _ = self.model_target(target)
 
             source_loss += simple_loss_function(recon_source, source).data[0]
             target_loss += simple_loss_function(recon_target, target).data[0]
