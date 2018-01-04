@@ -139,12 +139,14 @@ for epoch in range(1, args.epochs + 1):
 
         reset_grads()
         # Train Discriminator
-        z_s = z_s.detach()
+        # z_s = z_s.detach()
+        _, _, _, z_s = model_source(source_input)
         d_real_decision = discriminator_model(z_s)[:, 0]
         d_real_error = criterion(d_real_decision, ones)  # ones = true
         d_real_error.backward()
 
-        z_t = z_t.detach()
+        # z_t = z_t.detach()
+        _, _, _, z_t = model_target(target_input)
         d_fake_decision = discriminator_model(z_t)[:, 0]
         d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
         d_fake_error.backward()
@@ -163,6 +165,9 @@ for epoch in range(1, args.epochs + 1):
 
     # ---------- Tests --------------
     tests.source_to_target_test()
+    tests.args.one_sided = not tests.args.one_sided
+    tests.source_to_target_test()
+    tests.args.one_sided = not tests.args.one_sided
     tests.tsne()
     if not args.one_sided:
         tests.reconstruction(epoch)
