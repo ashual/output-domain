@@ -117,50 +117,50 @@ for epoch in range(1, args.epochs + 1):
         t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
 
         # Train encoder
-        d_fake_t = discriminator_model(z_t)[:, 0]
-        t_loss_discriminator = criterion(d_fake_t, ones)
-        if args.one_sided:
-            t_loss = t_loss_discriminator
-        else:
-            t_loss = args.h_tg * t_loss_generator + t_loss_discriminator
+        # d_fake_t = discriminator_model(z_t)[:, 0]
+        # t_loss_discriminator = criterion(d_fake_t, ones)
+        # if args.one_sided:
+        #     t_loss = t_loss_discriminator
+        # else:
+        #     t_loss = args.h_tg * t_loss_generator + t_loss_discriminator
+        #
+        # d_fake_s = discriminator_model(z_s)[:, 0]
+        # s_loss_discriminator = criterion(d_fake_s, ones)
 
-        d_fake_s = discriminator_model(z_s)[:, 0]
-        s_loss_discriminator = criterion(d_fake_s, ones)
+        # if args.apply_source_to_discriminator:
+        #     s_loss = s_loss_generator + s_loss_discriminator
+        # else:
+        #     s_loss = s_loss_generator
 
-        if args.apply_source_to_discriminator:
-            s_loss = s_loss_generator + s_loss_discriminator
-        else:
-            s_loss = s_loss_generator
-
-        s_loss.backward()
+        s_loss_generator.backward()
         source_optimizer.step()
-        t_loss.backward()
+        t_loss_generator.backward()
         target_optimizer.step()
 
-        reset_grads()
+        # reset_grads()
         # Train Discriminator
         # z_s = z_s.detach()
-        _, _, _, z_s = model_source(source_input)
-        d_real_decision = discriminator_model(z_s)[:, 0]
-        d_real_error = criterion(d_real_decision, ones)  # ones = true
-        d_real_error.backward()
-
-        # z_t = z_t.detach()
-        _, _, _, z_t = model_target(target_input)
-        d_fake_decision = discriminator_model(z_t)[:, 0]
-        d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
-        d_fake_error.backward()
-        d_optimizer.step()
+        # _, _, _, z_s = model_source(source_input)
+        # d_real_decision = discriminator_model(z_s)[:, 0]
+        # d_real_error = criterion(d_real_decision, ones)  # ones = true
+        # d_real_error.backward()
+        #
+        # # z_t = z_t.detach()
+        # _, _, _, z_t = model_target(target_input)
+        # d_fake_decision = discriminator_model(z_t)[:, 0]
+        # d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
+        # d_fake_error.backward()
+        # d_optimizer.step()
 
         # for p in discriminator_model.parameters():
         #     p.data.clamp_(-0.1, 0.1)
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = s_loss_discriminator.data[0]
-        graph.last4 = t_loss_discriminator.data[0]
-        graph.last5 = d_real_error.data[0]
-        graph.last6 = d_fake_error.data[0]
+        graph.last3 = 0#s_loss_discriminator.data[0]
+        graph.last4 = 0#t_loss_discriminator.data[0]
+        graph.last5 = 0#d_real_error.data[0]
+        graph.last6 = 0#d_fake_error.data[0]
         graph.add_point(running_counter)
 
     # ---------- Tests --------------
