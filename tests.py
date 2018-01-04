@@ -28,10 +28,12 @@ class Tests:
             test_loader = self.test_loader_target
             model_target = self.model_source
             model_source = self.model_target
+            text = ' t2s'
         else:
             test_loader = self.test_loader_source
             model_source = self.model_source
             model_target = self.model_target
+            text = ' s2t'
         self.model_source.eval()
         for i, (sample, labels) in enumerate(test_loader):
             for idx in range(10):
@@ -46,7 +48,7 @@ class Tests:
                 sample_digit = model_source.encoder_only(sample_digit.view(-1, 784))
                 sample_digit = model_target.decode(sample_digit).cpu()
                 concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
-                self.graph.draw(str(idx), concat_data.view(len(sample_digit) * 2, 1, 28, 28).cpu().numpy())
+                self.graph.draw(str(idx)+text, concat_data.view(len(sample_digit) * 2, 1, 28, 28).cpu().numpy())
             break
 
     def test_matching(self):
@@ -126,3 +128,14 @@ class Tests:
         fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
         self.graph.draw_figure('target tsne', fig)
         plt.close(fig)
+
+    def gaussian_input(self):
+        self.model_source.eval()
+        self.model_target.eval()
+        sample = Variable(torch.randn(64, 40))
+        if self.cuda:
+            sample = sample.cuda()
+        sample_source = self.model_source.decode(sample).cpu()
+        sample_target = self.model_target.decode(sample).cpu()
+        self.graph.draw('gaussian source', sample_source.data.view(64, 1, 28, 28).cpu().numpy())
+        self.graph.draw('gaussian target', sample_target.data.view(64, 1, 28, 28).cpu().numpy())

@@ -168,6 +168,7 @@ for epoch in range(1, args.epochs + 1):
     tests.args.one_sided = not tests.args.one_sided
     tests.source_to_target_test()
     tests.args.one_sided = not tests.args.one_sided
+    tests.gaussian_input()
     tests.tsne()
     if not args.one_sided:
         tests.reconstruction(epoch)
