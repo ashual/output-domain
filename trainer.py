@@ -16,6 +16,7 @@ from models.simple_model import VAE as TargetModel
 from models.discriminator import Discriminator
 from utils.graph import Graph
 from utils.loss import complex_loss_function as source_loss
+from utils.loss import complex_loss_function2 as source_loss2
 from utils.loss import simple_loss_function as target_loss
 from options import load_arguments
 
@@ -80,6 +81,14 @@ def reset_grads():
     discriminator_model.zero_grad()
 
 
+def gen(model, input, optimizer, loss, batch):
+    reset_grads()
+    decode, mu, logvar, _ = model(input)
+    t_loss_generator = loss(decode, target_input, mu, logvar, batch)
+    t_loss_generator.backward()
+    optimizer.step()
+
+
 running_counter = 0
 overall_accuracy = 0.
 for epoch in range(1, args.epochs + 1):
@@ -107,17 +116,19 @@ for epoch in range(1, args.epochs + 1):
 
 
         # Train generators
-        reset_grads()
-        decode_t, mu_t, logvar_t, z_t = model_target(target_input)
-        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
-        t_loss_generator.backward()
-        target_optimizer.step()
+        gen(model_target, target_input, target_optimizer, source_loss, args.batch_size)
+        # reset_grads()
+        # decode_t, mu_t, logvar_t, z_t = model_target(target_input)
+        # t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
+        # t_loss_generator.backward()
+        # target_optimizer.step()
 
-        reset_grads()
-        decode_s, mu_s, logvar_s, z_s = model_source(source_input)
-        s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
-        s_loss_generator.backward()
-        source_optimizer.step()
+        gen(model_source, source_input, source_optimizer, source_loss2, args.batch_size)
+        # reset_grads()
+        # decode_s, mu_s, logvar_s, z_s = model_source(source_input)
+        # s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
+        # s_loss_generator.backward()
+        # source_optimizer.step()
 
         # Train encoder
         # d_fake_t = discriminator_model(z_t)[:, 0]
@@ -155,8 +166,8 @@ for epoch in range(1, args.epochs + 1):
         # for p in discriminator_model.parameters():
         #     p.data.clamp_(-0.1, 0.1)
 
-        graph.last1 = s_loss_generator.data[0]
-        graph.last2 = t_loss_generator.data[0]
+        graph.last1 = 0#s_loss_generator.data[0]
+        graph.last2 = 0#t_loss_generator.data[0]
         graph.last3 = 0#s_loss_discriminator.data[0]
         graph.last4 = 0#t_loss_discriminator.data[0]
         graph.last5 = 0#d_real_error.data[0]
