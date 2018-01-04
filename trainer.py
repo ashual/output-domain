@@ -180,7 +180,7 @@ for epoch in range(1, args.epochs + 1):
     # tests.source_to_target_test()
     # tests.args.one_sided = not tests.args.one_sided
     # tests.gaussian_input()
-    tests.tsne()
+    tests.tsne(train_loader_source, train_loader_target)
     # if not args.one_sided:
     #     tests.reconstruction(epoch)
     #     certain, sparse = tests.test_matching()
