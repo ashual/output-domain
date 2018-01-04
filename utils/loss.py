@@ -13,7 +13,7 @@ def complex_loss_function(recon_x, x, mu, logvar, args):
     # Normalise by same number of elements as in reconstruction
     KLD /= args.batch_size * 784
 
-    return BCE + KLD
+    return BCE + 5 * KLD
 
 
 def simple_loss_function(recon_x, x):

@@ -77,10 +77,6 @@ def reset_grads():
     model_target.zero_grad()
     model_source.zero_grad()
     discriminator_model.zero_grad()
-    target_optimizer.zero_grad()
-    # target_optimizer_encoder.zero_grad()
-    source_optimizer.zero_grad()
-    d_optimizer.zero_grad()
 
 
 running_counter = 0
@@ -110,11 +106,12 @@ for epoch in range(1, args.epochs + 1):
 
         reset_grads()
         # Train generators
+        decode_t, mu_t, logvar_t, z_t = model_target(target_input)
+        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
+
         decode_s, mu_s, logvar_s, z_s = model_source(source_input)
         s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
 
-        decode_t, mu_t, logvar_t, z_t = model_target(target_input)
-        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
 
         # Train encoder
         # d_fake_t = discriminator_model(z_t)[:, 0]
@@ -164,21 +161,21 @@ for epoch in range(1, args.epochs + 1):
         graph.add_point(running_counter)
 
     # ---------- Tests --------------
-    tests.source_to_target_test()
-    tests.args.one_sided = not tests.args.one_sided
-    tests.source_to_target_test()
-    tests.args.one_sided = not tests.args.one_sided
-    tests.gaussian_input()
+    # tests.source_to_target_test()
+    # tests.args.one_sided = not tests.args.one_sided
+    # tests.source_to_target_test()
+    # tests.args.one_sided = not tests.args.one_sided
+    # tests.gaussian_input()
     tests.tsne()
-    if not args.one_sided:
-        tests.reconstruction(epoch)
-        certain, sparse = tests.test_matching()
-        accuracy = certain + sparse
-        print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
-        if epoch > 10 and accuracy > overall_accuracy:
-            overall_accuracy = accuracy
-    print('saving mnist model')
-    if not os.path.isdir('results/{}'.format(args.graph_name)):
-        os.mkdir('results/{}'.format(args.graph_name))
-    torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
-    torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))
+    # if not args.one_sided:
+    #     tests.reconstruction(epoch)
+    #     certain, sparse = tests.test_matching()
+    #     accuracy = certain + sparse
+    #     print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
+    #     if epoch > 10 and accuracy > overall_accuracy:
+    #         overall_accuracy = accuracy
+    # print('saving mnist model')
+    # if not os.path.isdir('results/{}'.format(args.graph_name)):
+    #     os.mkdir('results/{}'.format(args.graph_name))
+    # torch.save(model_source, 'results/{}/model_source.pt'.format(args.graph_name))
+    # torch.save(model_target, 'results/{}/model_target.pt'.format(args.graph_name))
