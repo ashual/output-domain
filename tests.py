@@ -46,9 +46,10 @@ class Tests:
                 if self.cuda:
                     sample_digit = sample_digit.cuda()
                 sample_digit = model_source.encoder_only(sample_digit.view(-1, 784))
-                sample_digit = model_target.decode(sample_digit).cpu()
-                concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit.data), 0)
-                self.graph.draw(str(idx)+text, concat_data.view(len(sample_digit) * 2, 1, 28, 28).cpu().numpy())
+                sample_digit_t = model_target.decode(sample_digit).cpu()
+                sample_digit_s = model_source.decode(sample_digit).cpu()
+                concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit_t.data, sample_digit_s.data), 0)
+                self.graph.draw(str(idx)+text, concat_data.view(len(sample_digit) * 3, 1, 28, 28).cpu().numpy())
             break
 
     def test_matching(self):
