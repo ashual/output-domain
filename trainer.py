@@ -11,6 +11,7 @@ from data_loader import get_data_loader
 from utils.mnist_classifier.classify import ClassifyMNIST
 from tests import Tests
 from models.complex_model import VAE
+from models.complex_model_2 import VAE2
 from models.simple_model import VAE as TargetModel
 from models.discriminator import Discriminator
 from utils.graph import Graph
@@ -46,7 +47,7 @@ else:
 
 if not (args.resume and os.path.isfile(args.model_source_path)):
     print('Creating new source model')
-    model_source = VAE()
+    model_source = VAE2()
 else:
     print('Loading source model from {}'.format(args.model_source_path))
     model_source = torch.load(args.model_source_path)
