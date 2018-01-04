@@ -95,7 +95,7 @@ class Tests:
         print('====> Epoch: {}, Reconstruction source loss: {:.6f},'
               'Reconstruction target loss: {:.6f}'.format(epoch, source_loss, target_loss))
 
-    def tsne(self):
+    def tsne(self, test_source, test_target):
         self.model_source.eval()
         self.model_target.eval()
         all_enc_source = None
@@ -103,7 +103,7 @@ class Tests:
         all_s_labels = None
         all_t_labels = None
         for i, ((source, s_labels), (target, t_labels)) in enumerate(
-            zip(self.test_loader_source, self.test_loader_target)):
+            zip(test_source, test_target)):
             if i == 4:
                 break
             source = Variable(source, volatile=True)
