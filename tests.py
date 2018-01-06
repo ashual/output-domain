@@ -123,11 +123,11 @@ class Tests:
                 all_enc_target = torch.cat([all_enc_target, enc_target], 0)
                 all_s_labels = torch.cat([all_s_labels, s_labels])
                 all_t_labels = torch.cat([all_t_labels, t_labels])
-        fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
-        self.graph.draw_figure('target tsne', fig)
-        plt.close(fig)
         fig = run_tsne(all_enc_source.numpy(), all_s_labels.numpy())
         self.graph.draw_figure('source tsne', fig)
+        plt.close(fig)
+        fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
+        self.graph.draw_figure('target tsne', fig)
         plt.close(fig)
 
 

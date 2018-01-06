@@ -16,7 +16,6 @@ from models.simple_model import VAE as TargetModel
 from models.discriminator import Discriminator
 from utils.graph import Graph
 from utils.loss import complex_loss_function as source_loss
-from utils.loss import complex_loss_function2 as source_loss2
 from utils.loss import simple_loss_function as target_loss
 from options import load_arguments
 
@@ -81,11 +80,11 @@ def reset_grads():
     discriminator_model.zero_grad()
 
 
-def gen(model, input, optimizer, loss, batch):
+def gen(model, input_data, optimizer, loss, batch):
     reset_grads()
-    decode, mu, logvar, _ = model(input)
-    t_loss_generator = loss(decode, target_input, mu, logvar, batch)
-    t_loss_generator.backward()
+    decode, mu, logvar, _ = model(input_data)
+    loss_generator = loss(decode, input_data, mu, logvar, batch)
+    loss_generator.backward()
     optimizer.step()
 
 
@@ -116,6 +115,7 @@ for epoch in range(1, args.epochs + 1):
 
 
         # Train generators
+        gen(model_source, source_input, source_optimizer, source_loss, args.batch_size)
         gen(model_target, target_input, target_optimizer, source_loss, args.batch_size)
         # reset_grads()
         # decode_t, mu_t, logvar_t, z_t = model_target(target_input)
@@ -123,7 +123,7 @@ for epoch in range(1, args.epochs + 1):
         # t_loss_generator.backward()
         # target_optimizer.step()
 
-        gen(model_source, source_input, source_optimizer, source_loss2, args.batch_size)
+
         # reset_grads()
         # decode_s, mu_s, logvar_s, z_s = model_source(source_input)
         # s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)

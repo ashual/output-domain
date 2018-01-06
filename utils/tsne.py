@@ -23,7 +23,7 @@ def plot_embedding(X, y, title=None):
 def run(x, y):
     # t-SNE embedding of the digits dataset
     print('Computing t-SNE embedding')
-    tsne = manifold.TSNE(n_components=2, random_state=0)
+    tsne = manifold.TSNE(n_components=2, init='pca', random_state=0)
     t0 = time()
     x_tsne = tsne.fit_transform(x)
 
