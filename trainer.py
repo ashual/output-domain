@@ -100,6 +100,7 @@ for epoch in range(1, args.epochs + 1):
     for i, ((source_input, _), (target_input, _)) in enumerate(zip(train_loader_source, train_loader_target)):
         running_counter += 1
         if source_input.size()[0] is not target_input.size()[0]:
+            print('continue')
             continue
         source_input = Variable(source_input)
         target_input = Variable(target_input)
@@ -115,7 +116,7 @@ for epoch in range(1, args.epochs + 1):
 
 
         # Train generators
-        gen(model_source, source_input, source_optimizer, source_loss, args.batch_size)
+        # gen(model_source, source_input, source_optimizer, source_loss, args.batch_size)
         gen(model_target, target_input, target_optimizer, source_loss, args.batch_size)
         # reset_grads()
         # decode_t, mu_t, logvar_t, z_t = model_target(target_input)
