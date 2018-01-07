@@ -95,8 +95,7 @@ class Tests:
         print('====> Epoch: {}, Reconstruction source loss: {:.6f},'
               'Reconstruction target loss: {:.6f}'.format(epoch, source_loss, target_loss))
 
-    def tsne(self, test_target):
-        self.model_target.eval()
+    def tsne(self, test_target, model_target):
         all_enc_target = None
         all_t_labels = None
         for i, (target, t_labels) in enumerate(test_target):
@@ -105,7 +104,7 @@ class Tests:
             target = Variable(target, volatile=True)
             if self.cuda:
                 target = target.cuda()
-            enc_target = self.model_target.encoder_only(target).cpu().data
+            enc_target = model_target.encoder_only(target).cpu().data
             if i == 0:
                 all_enc_target = enc_target
                 all_t_labels = t_labels

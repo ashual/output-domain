@@ -33,6 +33,7 @@ if args.source == 'mnist':
     train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'fashionMnist')
 elif args.source == 'fashionMnist':
+    print('data loader fashion mnist')
     train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'mnist')
 else:
@@ -89,34 +90,31 @@ def gen(model, input_data, optimizer, loss, batch):
 
 
 running_counter = 0
-overall_accuracy = 0.
+
 for epoch in range(1, args.epochs + 1):
     print('---- Epoch {} ----'.format(epoch))
+    iteration = 0
     model_source.train()
     model_target.train()
     discriminator_model.train()
-
+    source_iter = iter(train_loader_source)
+    target_iter = iter(train_loader_target)
     # ---------- Train --------------
-    for i, ((source_input, _), (target_input, _)) in enumerate(zip(train_loader_source, train_loader_target)):
+    while iteration < len(source_iter) and iteration < len(target_iter):
         running_counter += 1
-        if source_input.size()[0] is not target_input.size()[0]:
-            print('continue')
-            continue
+        iteration += 1
+        source_input, _ = target_iter.next()
         source_input = Variable(source_input)
+        target_input, _ = target_iter.next()
         target_input = Variable(target_input)
-        size = source_input.size()[0]
-        ones = Variable(torch.ones(size))
-        zeros = Variable(torch.zeros(size))
 
         if args.cuda:
             source_input = source_input.cuda()
             target_input = target_input.cuda()
-            ones = ones.cuda()
-            zeros = zeros.cuda()
 
 
         # Train generators
-        # gen(model_source, source_input, source_optimizer, source_loss, args.batch_size)
+        gen(model_source, source_input, source_optimizer, source_loss, args.batch_size)
         gen(model_target, target_input, target_optimizer, source_loss, args.batch_size)
         # reset_grads()
         # decode_t, mu_t, logvar_t, z_t = model_target(target_input)
@@ -181,7 +179,8 @@ for epoch in range(1, args.epochs + 1):
     # tests.source_to_target_test()
     # tests.args.one_sided = not tests.args.one_sided
     # tests.gaussian_input()
-    tests.tsne(train_loader_target)
+    tests.tsne(train_loader_source, model_source)
+    tests.tsne(train_loader_target, model_target)
     # if not args.one_sided:
     #     tests.reconstruction(epoch)
     #     certain, sparse = tests.test_matching()
