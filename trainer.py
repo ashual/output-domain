@@ -77,14 +77,10 @@ def reset_grads():
     model_target.zero_grad()
     model_source.zero_grad()
     discriminator_model.zero_grad()
-    target_optimizer.zero_grad()
-    # target_optimizer_encoder.zero_grad()
-    source_optimizer.zero_grad()
-    d_optimizer.zero_grad()
 
 
 running_counter = 0
-overall_accuracy = 0.
+
 for epoch in range(1, args.epochs + 1):
     print('---- Epoch {} ----'.format(epoch))
     model_source.train()
@@ -108,13 +104,13 @@ for epoch in range(1, args.epochs + 1):
             ones = ones.cuda()
             zeros = zeros.cuda()
 
-        reset_grads()
         # Train generators
+        reset_grads()
         decode_s, mu_s, logvar_s, z_s = model_source(source_input)
-        s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args)
+        s_loss_generator = source_loss(decode_s, source_input, mu_s, logvar_s, args.batch_size)
 
         decode_t, mu_t, logvar_t, z_t = model_target(target_input)
-        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args)
+        t_loss_generator = source_loss(decode_t, target_input, mu_t, logvar_t, args.batch_size)
 
         # Train encoder
         d_fake_t = discriminator_model(z_t)[:, 0]
