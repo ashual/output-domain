@@ -32,10 +32,19 @@ if args.source == 'mnist':
     train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'fashionMnist')
 elif args.source == 'fashionMnist':
-    train_loader_source = get_data_loader(args, True, 'mnist')
+    train_loader_source = get_data_loader(args, True, 'fashionMnist')
     train_loader_target = get_data_loader(args, True, 'mnist')
 else:
     raise Exception('args.source does not defined')
+
+if not (args.resume and os.path.isfile(args.model_source_path)):
+    print('Creating new source model')
+    model_source = SourceModel()
+    source_resume = False
+else:
+    print('Loading source model from {}'.format(args.model_source_path))
+    model_source = torch.load(args.model_source_path)
+    source_resume = True
 
 if not (args.resume and os.path.isfile(args.model_target_path)):
     print('Creating new target model')
@@ -44,12 +53,6 @@ else:
     print('Loading target model from {}'.format(args.model_target_path))
     model_target = torch.load(args.model_target_path)
 
-if not (args.resume and os.path.isfile(args.model_source_path)):
-    print('Creating new source model')
-    model_source = SourceModel()
-else:
-    print('Loading source model from {}'.format(args.model_source_path))
-    model_source = torch.load(args.model_source_path)
 discriminator_model = Discriminator(20, 20)
 
 if args.cuda:
@@ -128,8 +131,9 @@ for epoch in range(1, args.epochs + 1):
         else:
             s_loss = s_loss_generator
 
-        s_loss.backward()
-        source_optimizer.step()
+        if not source_resume:
+            s_loss.backward()
+            source_optimizer.step()
         t_loss.backward()
         target_optimizer.step()
 
@@ -153,10 +157,10 @@ for epoch in range(1, args.epochs + 1):
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = 0#s_loss_discriminator.data[0]
-        graph.last4 = 0#t_loss_discriminator.data[0]
-        graph.last5 = 0#d_real_error.data[0]
-        graph.last6 = 0#d_fake_error.data[0]
+        graph.last3 = s_loss_discriminator.data[0]
+        graph.last4 = t_loss_discriminator.data[0]
+        graph.last5 = d_real_error.data[0]
+        graph.last6 = d_fake_error.data[0]
         graph.add_point(running_counter)
 
     # ---------- Tests --------------
