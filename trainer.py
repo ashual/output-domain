@@ -103,7 +103,7 @@ for epoch in range(1, args.epochs + 1):
     while iteration < len(source_iter) and iteration < len(target_iter):
         running_counter += 1
         iteration += 1
-        source_input, _ = target_iter.next()
+        source_input, _ = source_iter.next()
         source_input = Variable(source_input)
         target_input, _ = target_iter.next()
         target_input = Variable(target_input)
