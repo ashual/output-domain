@@ -71,7 +71,7 @@ criterion = nn.BCELoss()
 if args.source == 'mnist':
     tests = Tests(model_source, model_target, classifyMNIST, 'mnist', 'fashionMnist', args, graph)
 elif args.source == 'fashionMnist':
-    tests = Tests(model_source, model_target, classifyMNIST, 'mnist', 'mnist', args, graph)
+    tests = Tests(model_source, model_target, classifyMNIST, 'fashionMnist', 'mnist', args, graph)
 else:
     raise Exception('args.source does not defined')
 
