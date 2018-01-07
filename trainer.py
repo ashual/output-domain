@@ -32,7 +32,7 @@ if args.source == 'mnist':
     train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'fashionMnist')
 elif args.source == 'fashionMnist':
-    train_loader_source = get_data_loader(args, True, 'fashionMnist')
+    train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'mnist')
 else:
     raise Exception('args.source does not defined')
@@ -68,7 +68,7 @@ criterion = nn.BCELoss()
 if args.source == 'mnist':
     tests = Tests(model_source, model_target, classifyMNIST, 'mnist', 'fashionMnist', args, graph)
 elif args.source == 'fashionMnist':
-    tests = Tests(model_source, model_target, classifyMNIST, 'fashionMnist', 'mnist', args, graph)
+    tests = Tests(model_source, model_target, classifyMNIST, 'mnist', 'mnist', args, graph)
 else:
     raise Exception('args.source does not defined')
 
