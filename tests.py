@@ -104,7 +104,7 @@ class Tests:
         all_t_labels = None
         for i, ((source, s_labels), (target, t_labels)) in enumerate(
             zip(self.test_loader_source, self.test_loader_target)):
-            if i == 4:
+            if i == 3:
                 break
             source = Variable(source, volatile=True)
             target = Variable(target, volatile=True)
@@ -130,7 +130,8 @@ class Tests:
         self.graph.draw_figure('target tsne', fig)
         plt.close(fig)
         data_combined = torch.cat([all_enc_source, all_enc_target]).numpy()
-        labels_combined = torch.cat([torch.ones(all_enc_source.size()), torch.zeros(all_enc_target.size())]).numpy()
+        labels_combined = np.concatenate((np.zeros(all_enc_source.size()[0]), np.ones(all_enc_target.size()[0])*5),
+                                         axis=0)
         fig = run_tsne(data_combined, labels_combined)
         self.graph.draw_figure('Combined tsne', fig)
         plt.close(fig)
