@@ -118,7 +118,7 @@ for epoch in range(1, args.epochs + 1):
         if args.one_sided:
             t_loss = t_loss_discriminator
         else:
-            t_loss = args.h_tg * t_loss_generator + t_loss_discriminator
+            t_loss = args.h_tg * t_loss_generator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
         s_loss_discriminator = criterion(d_fake_s, ones)
@@ -133,30 +133,30 @@ for epoch in range(1, args.epochs + 1):
         t_loss.backward()
         target_optimizer.step()
 
-        reset_grads()
-        # Train Discriminator
-        # z_s = z_s.detach()
-        _, _, _, z_s = model_source(source_input)
-        d_real_decision = discriminator_model(z_s)[:, 0]
-        d_real_error = criterion(d_real_decision, ones)  # ones = true
-        d_real_error.backward()
-
-        # z_t = z_t.detach()
-        _, _, _, z_t = model_target(target_input)
-        d_fake_decision = discriminator_model(z_t)[:, 0]
-        d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
-        d_fake_error.backward()
-        d_optimizer.step()
+        # reset_grads()
+        # # Train Discriminator
+        # # z_s = z_s.detach()
+        # _, _, _, z_s = model_source(source_input)
+        # d_real_decision = discriminator_model(z_s)[:, 0]
+        # d_real_error = criterion(d_real_decision, ones)  # ones = true
+        # d_real_error.backward()
+        #
+        # # z_t = z_t.detach()
+        # _, _, _, z_t = model_target(target_input)
+        # d_fake_decision = discriminator_model(z_t)[:, 0]
+        # d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
+        # d_fake_error.backward()
+        # d_optimizer.step()
 
         # for p in discriminator_model.parameters():
         #     p.data.clamp_(-0.1, 0.1)
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = s_loss_discriminator.data[0]
-        graph.last4 = t_loss_discriminator.data[0]
-        graph.last5 = d_real_error.data[0]
-        graph.last6 = d_fake_error.data[0]
+        graph.last3 = 0#s_loss_discriminator.data[0]
+        graph.last4 = 0#t_loss_discriminator.data[0]
+        graph.last5 = 0#d_real_error.data[0]
+        graph.last6 = 0#d_fake_error.data[0]
         graph.add_point(running_counter)
 
     # ---------- Tests --------------
