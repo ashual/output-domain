@@ -157,7 +157,7 @@ for epoch in range(1, args.epochs + 1):
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = s_loss_discriminator.data[0]
+        graph.last3 = 0.  # s_loss_discriminator.data[0]
         graph.last4 = t_loss_discriminator.data[0]
         graph.last5 = d_real_error.data[0]
         graph.last6 = d_fake_error.data[0]
