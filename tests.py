@@ -129,6 +129,11 @@ class Tests:
         fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
         self.graph.draw_figure('target tsne', fig)
         plt.close(fig)
+        data_combined = torch.cat([all_enc_source, all_enc_target]).numpy()
+        labels_combined = torch.cat([torch.ones(all_enc_source.size()), torch.zeros(all_enc_target.size())]).numpy()
+        fig = run_tsne(data_combined, labels_combined)
+        self.graph.draw_figure('Combined tsne', fig)
+        plt.close(fig)
 
     def gaussian_input(self):
         self.model_source.eval()

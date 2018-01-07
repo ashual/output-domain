@@ -153,8 +153,8 @@ for epoch in range(1, args.epochs + 1):
         if t_loss_discriminator.data[0] < 0.5 or d_fake_error.data[0] > 0.3 or d_real_error.data[0] > 0.3:
             d_optimizer.step()
 
-        # for p in discriminator_model.parameters():
-        #     p.data.clamp_(-0.1, 0.1)
+        for p in discriminator_model.parameters():
+            p.data.clamp_(-0.1, 0.1)
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]

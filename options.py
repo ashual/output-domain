@@ -21,7 +21,7 @@ def load_arguments():
     parser.add_argument('--lr', type=float, default=0.0001, help='learning rate (default: 0.0001)')
     parser.add_argument('--model_target_path', type=str, default='')
     parser.add_argument('--model_source_path', type=str, default='')
-    parser.add_argument('--h_tg', type=int, default=1, help='hyper parameter target generator loss (default: 1)')
+    parser.add_argument('--h_tg', type=float, default=1, help='hyper parameter target generator loss (default: 1)')
     parser.add_argument('--apply_source_to_discriminator', action='store_true', default=False,
                         help='Apply discriminator loss to source')
     args = parser.parse_args()
