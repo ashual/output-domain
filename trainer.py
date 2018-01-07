@@ -33,7 +33,7 @@ if args.source == 'mnist':
     train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'fashionMnist')
 elif args.source == 'fashionMnist':
-    train_loader_source = get_data_loader(args, True, 'fashionMnist')
+    train_loader_source = get_data_loader(args, True, 'mnist')
     train_loader_target = get_data_loader(args, True, 'mnist')
 else:
     raise Exception('args.source does not defined')
@@ -180,7 +180,7 @@ for epoch in range(1, args.epochs + 1):
     # tests.source_to_target_test()
     # tests.args.one_sided = not tests.args.one_sided
     # tests.gaussian_input()
-    tests.tsne(train_loader_source, train_loader_target)
+    tests.tsne(train_loader_target)
     # if not args.one_sided:
     #     tests.reconstruction(epoch)
     #     certain, sparse = tests.test_matching()

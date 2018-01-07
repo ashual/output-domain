@@ -95,37 +95,26 @@ class Tests:
         print('====> Epoch: {}, Reconstruction source loss: {:.6f},'
               'Reconstruction target loss: {:.6f}'.format(epoch, source_loss, target_loss))
 
-    def tsne(self, test_source, test_target):
-        self.model_source.eval()
+    def tsne(self, test_target):
         self.model_target.eval()
-        all_enc_source = None
         all_enc_target = None
-        all_s_labels = None
         all_t_labels = None
-        for i, ((source, s_labels), (target, t_labels)) in enumerate(
-            zip(test_source, test_target)):
+        for i, (target, t_labels) in enumerate(test_target):
             if i == 4:
                 break
-            source = Variable(source, volatile=True)
             target = Variable(target, volatile=True)
             if self.cuda:
-                source = source.cuda()
                 target = target.cuda()
-            enc_source = self.model_source.encoder_only(source).cpu().data
             enc_target = self.model_target.encoder_only(target).cpu().data
             if i == 0:
-                all_enc_source = enc_source
                 all_enc_target = enc_target
-                all_s_labels = s_labels
                 all_t_labels = t_labels
             else:
-                all_enc_source = torch.cat([all_enc_source, enc_source], 0)
                 all_enc_target = torch.cat([all_enc_target, enc_target], 0)
-                all_s_labels = torch.cat([all_s_labels, s_labels])
                 all_t_labels = torch.cat([all_t_labels, t_labels])
-        fig = run_tsne(all_enc_source.numpy(), all_s_labels.numpy())
-        self.graph.draw_figure('source tsne', fig)
-        plt.close(fig)
+        # fig = run_tsne(all_enc_source.numpy(), all_s_labels.numpy())
+        # self.graph.draw_figure('source tsne', fig)
+        # plt.close(fig)
         fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
         self.graph.draw_figure('target tsne', fig)
         plt.close(fig)
