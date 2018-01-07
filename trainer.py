@@ -150,7 +150,7 @@ for epoch in range(1, args.epochs + 1):
         d_fake_decision = discriminator_model(z_t)[:, 0]
         d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
         d_fake_error.backward()
-        if t_loss_discriminator.data[0] < 0.5:
+        if t_loss_discriminator.data[0] < 0.5 or d_fake_error.data[0] > 0.3 or d_real_error.data[0] > 0.3:
             d_optimizer.step()
 
         # for p in discriminator_model.parameters():
