@@ -9,7 +9,7 @@ class Discriminator(nn.Module):
         super(Discriminator, self).__init__()
         self.n_B = n_B
         self.n_C = n_C
-        self.num_channels = 20
+        self.num_channels = 40
 
         self.fc1 = nn.Linear(40, 128)
         self.fc2 = nn.Linear(128, 40)
