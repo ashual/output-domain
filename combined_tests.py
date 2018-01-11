@@ -6,41 +6,33 @@ import torch.utils.data
 from torch.autograd import Variable
 
 from data_loader import get_data_loader
-from plot import plot_results
+from plot import plot_results, calculate_accuracy
 from utils.loss import simple_loss_function
 from utils.tsne import run as run_tsne
 import matplotlib.pyplot as plt
 
-digits_categories = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-cloths_categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag',
-                     'Ankle boot']
-n_categories = 10
-
 
 class Tests:
-    def __init__(self, model_source, model_target, classify_model, source, target, args, graph):
+    def __init__(self, model_combined, classify_model, source, target, args, graph):
         self.test_loader_source = get_data_loader(args, False, source)
         self.test_loader_target = get_data_loader(args, False, target)
-        self.model_source = model_source
-        self.model_target = model_target
+        self.model_combined = model_combined
         self.classify_model = classify_model
         self.args = args
         self.graph = graph
         self.cuda = args.cuda
-        self.source = source
-        self.target = target
 
     def source_to_target_test(self):
         if self.args.one_sided:
             test_loader = self.test_loader_target
             model_target = self.model_source
             model_source = self.model_target
-            text = digits_categories
+            text = ' t2s'
         else:
             test_loader = self.test_loader_source
             model_source = self.model_source
             model_target = self.model_target
-            text = cloths_categories
+            text = ' s2t'
         self.model_source.eval()
         for i, (sample, labels) in enumerate(test_loader):
             for idx in range(10):
@@ -56,10 +48,11 @@ class Tests:
                 sample_digit_t = model_target.decode(sample_digit).cpu()
                 sample_digit_s = model_source.decode(sample_digit).cpu()
                 concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit_t.data, sample_digit_s.data), 0)
-                self.graph.draw(str(text[idx]), concat_data.view(len(sample_digit) * 3, 1, 28, 28).cpu().numpy())
+                self.graph.draw(str(idx)+text, concat_data.view(len(sample_digit) * 3, 1, 28, 28).cpu().numpy())
             break
 
     def test_matching(self):
+        n_categories = 10
         confusion = torch.zeros(n_categories, n_categories).long().cpu()
         for i, (sample, labels) in enumerate(self.test_loader_target):
             sample_digit = Variable(sample)
@@ -70,11 +63,12 @@ class Tests:
             results = self.classify_model.test(sample_digit).cpu()
             for index, label in enumerate(labels):
                 confusion[label][results[index]] += 1
-        return plot_results(confusion, self.graph, cloths_categories, digits_categories)
+        plot_results(confusion, self.graph)
+        return calculate_accuracy(confusion)
 
     def reconstruction(self, epoch):
-        self.model_source.eval()
-        self.model_target.eval()
+        self.model_combined.eval()
+        ll_criterion = torch.nn.MSELoss()
         source_loss = 0.
         target_loss = 0.
         for i, ((source, _), (target, _)) in enumerate(zip(self.test_loader_source, self.test_loader_target)):
@@ -83,16 +77,15 @@ class Tests:
             if self.cuda:
                 source = source.cuda()
                 target = target.cuda()
-            recon_source, _, _, _ = self.model_source(source)
-            recon_target, _, _, _ = self.model_target(target)
+            x_aa, x_ba, x_ab, x_bb, [codes] = self.model_combined(source, target)
 
-            source_loss += simple_loss_function(recon_source, source).data[0]
-            target_loss += simple_loss_function(recon_target, target).data[0]
+            source_loss += ll_criterion(x_aa, source).data[0]
+            target_loss += ll_criterion(x_bb, target).data[0]
             if i == 0:
                 n = min(source.size(0), 8)
-                comparison_source = torch.cat([source[:n], recon_source.view(-1, 1, 28, 28)[:n]])
+                comparison_source = torch.cat([source[:n], x_aa.view(-1, 1, 28, 28)[:n]])
                 n = min(target.size(0), 8)
-                comparison_target = torch.cat([target[:n], recon_target.view(-1, 1, 28, 28)[:n]])
+                comparison_target = torch.cat([target[:n], x_bb.view(-1, 1, 28, 28)[:n]])
                 self.graph.draw('reconstruction_source', comparison_source.data.cpu().numpy())
                 self.graph.draw('reconstruction_target', comparison_target.data.cpu().numpy())
         source_loss /= len(self.test_loader_source.dataset)

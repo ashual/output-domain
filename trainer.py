@@ -173,9 +173,8 @@ for epoch in range(1, args.epochs + 1):
     tests.tsne()
     if not args.one_sided:
         tests.reconstruction(epoch)
-        certain, sparse = tests.test_matching()
-        accuracy = certain + sparse
-        print('certain: {}, sparse: {}, all: {} old max: {}'.format(certain, sparse, accuracy, overall_accuracy))
+        accuracy = tests.test_matching()
+        print('all: {} old max: {}'.format(accuracy, overall_accuracy))
         if epoch > 10 and accuracy > overall_accuracy:
             overall_accuracy = accuracy
     print('saving mnist model')
