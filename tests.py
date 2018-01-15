@@ -9,7 +9,6 @@ from data_loader import get_data_loader
 from plot import plot_results
 from utils.loss import simple_loss_function
 from utils.tsne import run as run_tsne
-import matplotlib.pyplot as plt
 
 digits_categories = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
 cloths_categories = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag',
@@ -128,18 +127,15 @@ class Tests:
                 all_enc_target = torch.cat([all_enc_target, enc_target], 0)
                 all_s_labels = torch.cat([all_s_labels, s_labels])
                 all_t_labels = torch.cat([all_t_labels, t_labels])
-        fig = run_tsne(all_enc_source.numpy(), all_s_labels.numpy())
-        self.graph.draw_figure('source tsne', fig)
-        plt.close(fig)
-        fig = run_tsne(all_enc_target.numpy(), all_t_labels.numpy())
-        self.graph.draw_figure('target tsne', fig)
-        plt.close(fig)
+        x_tsne = run_tsne(all_enc_source.numpy())
+        self.graph.draw_scatter('tsne source', x_tsne, all_s_labels.numpy() + 1, [str(i) for i in range(10)])
+        x_tsne = run_tsne(all_enc_target.numpy())
+        self.graph.draw_scatter('tsne target', x_tsne, all_t_labels.numpy() + 1, [str(i) for i in range(10)])
         data_combined = torch.cat([all_enc_source, all_enc_target]).numpy()
-        labels_combined = np.concatenate((np.zeros(all_enc_source.size()[0]), np.ones(all_enc_target.size()[0])*5),
+        labels_combined = np.concatenate((np.ones(all_enc_source.size()[0]), np.ones(all_enc_target.size()[0]) + 1),
                                          axis=0)
-        fig = run_tsne(data_combined, labels_combined)
-        self.graph.draw_figure('Combined tsne', fig)
-        plt.close(fig)
+        x_tsne = run_tsne(data_combined)
+        self.graph.draw_scatter('Combined tsne', x_tsne, labels_combined, ['source', 'target'])
 
     def gaussian_input(self):
         self.model_source.eval()
