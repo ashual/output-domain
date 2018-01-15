@@ -23,7 +23,7 @@ class Graph:
                 Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5, self.last6)),
                                                  env=self.env, opts=dict(legend=self.legend))
         else:
-            self.viz.updateTrace(X=np.column_stack((x, x, x, x, x, x)),
+            self.viz.line(update='append', X=np.column_stack((x, x, x, x, x, x)),
                                  Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5,
                                                     self.last6)),
                                  env=self.env, win=self.plots[var_name])
