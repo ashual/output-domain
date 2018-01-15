@@ -11,11 +11,11 @@ from data_loader import get_data_loader
 from utils.mnist_classifier.classify import ClassifyMNIST
 from tests import Tests
 from models.complex_model import VAE as SourceModel
-from models.simple_model import VAE as TargetModel
+# from models.simple_model import VAE as TargetModel
 from models.discriminator import Discriminator
 from utils.graph import Graph
 from utils.loss import complex_loss_function as source_loss
-from utils.loss import simple_loss_function as target_loss
+# from utils.loss import simple_loss_function as target_loss
 from options import load_arguments
 
 
@@ -116,25 +116,19 @@ for epoch in range(1, args.epochs + 1):
         # Train encoder
         d_fake_t = discriminator_model(z_t)[:, 0]
         t_loss_discriminator = criterion(d_fake_t, ones)
-        if args.one_sided:
-            t_loss = t_loss_discriminator
-        else:
-            t_loss = t_loss_generator + args.h_tg * t_loss_discriminator
+        t_loss = args.h_tlg * t_loss_generator +\
+                 args.h_tld * t_loss_discriminator
 
         d_fake_s = discriminator_model(z_s)[:, 0]
-        s_loss_discriminator = criterion(d_fake_s, ones)
+        s_loss_discriminator = criterion(d_fake_s, zeros)
 
-        if args.apply_source_to_discriminator:
-            s_loss = s_loss_generator + s_loss_discriminator
-        else:
-            s_loss = s_loss_generator
+        s_loss = args.h_slg * s_loss_generator +\
+                 args.h_sld * s_loss_discriminator
 
-        if not source_resume:
-            s_loss.backward()
-            source_optimizer.step()
+        s_loss.backward()
+        source_optimizer.step()
         t_loss.backward()
         target_optimizer.step()
-
 
         # Train Discriminator
         # z_s = z_s.detach()
@@ -142,22 +136,23 @@ for epoch in range(1, args.epochs + 1):
         _, _, _, z_s = model_source(source_input)
         d_real_decision = discriminator_model(z_s)[:, 0]
         d_real_error = criterion(d_real_decision, ones)  # ones = true
-        d_real_error.backward()
 
         # z_t = z_t.detach()
         _, _, _, z_t = model_target(target_input)
         d_fake_decision = discriminator_model(z_t)[:, 0]
         d_fake_error = criterion(d_fake_decision, zeros)  # zeros = fake
-        d_fake_error.backward()
-        if t_loss_discriminator.data[0] < 0.5 or d_fake_error.data[0] > 0.3 or d_real_error.data[0] > 0.3:
-            d_optimizer.step()
 
-        for p in discriminator_model.parameters():
-            p.data.clamp_(-0.1, 0.1)
+        d_loss = args.h_ds * d_real_error +\
+                 args.h_dt * d_fake_error
+        d_loss.backward()
+        d_optimizer.step()
+
+        # for p in discriminator_model.parameters():
+        #     p.data.clamp_(-0.1, 0.1)
 
         graph.last1 = s_loss_generator.data[0]
         graph.last2 = t_loss_generator.data[0]
-        graph.last3 = 0.  # s_loss_discriminator.data[0]
+        graph.last3 = s_loss_discriminator.data[0]
         graph.last4 = t_loss_discriminator.data[0]
         graph.last5 = d_real_error.data[0]
         graph.last6 = d_fake_error.data[0]
@@ -170,12 +165,11 @@ for epoch in range(1, args.epochs + 1):
     tests.args.one_sided = not tests.args.one_sided
     tests.gaussian_input()
     tests.tsne()
-    if not args.one_sided:
-        tests.reconstruction(epoch)
-        accuracy = tests.test_matching()
-        print('all: {} old max: {}'.format(accuracy, overall_accuracy))
-        if epoch > 10 and accuracy > overall_accuracy:
-            overall_accuracy = accuracy
+    tests.reconstruction(epoch)
+    accuracy = tests.test_matching()
+    print('all: {} old max: {}'.format(accuracy, overall_accuracy))
+    if epoch > 10 and accuracy > overall_accuracy:
+        overall_accuracy = accuracy
     print('saving mnist model')
     if not os.path.isdir('results/{}'.format(args.graph_name)):
         os.mkdir('results/{}'.format(args.graph_name))

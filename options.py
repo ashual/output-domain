@@ -5,7 +5,7 @@ import datetime
 
 
 def load_arguments():
-    parser = argparse.ArgumentParser(sys.argv[0], description='VAE MNIST Example')
+    parser = argparse.ArgumentParser(sys.argv[0], description='MNIST Domain Adaptation')
     parser.add_argument('--batch-size', type=int, default=128, metavar='N',
                         help='input batch size for training (default: 128)')
     parser.add_argument('--source', type=str, default='fashionMnist',
@@ -15,15 +15,16 @@ def load_arguments():
     parser.add_argument('--epochs', type=int, default=200, metavar='N', help='number of epochs to train (default: 10)')
     parser.add_argument('--no-cuda', action='store_true', default=False, help='enables CUDA training')
     parser.add_argument('--seed', type=int, default=1, metavar='S', help='random seed (default: 1)')
-    parser.add_argument('--log-interval', type=int, default=10, metavar='N',
-                        help='how many batches to wait before logging training status')
     parser.add_argument('--resume', action='store_true', default=False, help='resume the model (default: False)')
     parser.add_argument('--lr', type=float, default=0.0001, help='learning rate (default: 0.0001)')
     parser.add_argument('--model_target_path', type=str, default='')
     parser.add_argument('--model_source_path', type=str, default='')
-    parser.add_argument('--h_tg', type=float, default=1, help='hyper parameter target generator loss (default: 1)')
-    parser.add_argument('--apply_source_to_discriminator', action='store_true', default=False,
-                        help='Apply discriminator loss to source')
+    parser.add_argument('--h_tlg', type=float, default=1, help='hyper parameter target generator loss (default: 1)')
+    parser.add_argument('--h_tld', type=float, default=1, help='hyper parameter target discriminator loss (default: 1)')
+    parser.add_argument('--h_slg', type=float, default=1, help='hyper parameter source generator loss (default: 1)')
+    parser.add_argument('--h_sld', type=float, default=1, help='hyper parameter source discriminator loss (default: 1)')
+    parser.add_argument('--h_ds', type=float, default=1, help='hyper parameter disc from source loss(default: 1)')
+    parser.add_argument('--h_dt', type=float, default=1, help='hyper parameter disc from target loss (default: 1)')
     args = parser.parse_args()
 
     if not args.graph_name:
