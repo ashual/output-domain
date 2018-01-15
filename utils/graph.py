@@ -18,21 +18,21 @@ class Graph:
         self.plots = {}
 
     def add_point(self, x, var_name='all'):
-        if var_name not in self.plots:
+        if var_name not in self.plots or not self.viz.win_exists(self.plots[var_name], env=self.env):
             self.plots[var_name] = self.viz.line(X=np.column_stack((x, x, x, x, x, x)),
                 Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5, self.last6)),
-                                                 env=self.env, opts=dict(legend=self.legend))
+                                                 env=self.env, opts=dict(legend=self.legend, title=var_name))
         else:
             self.viz.line(update='append', X=np.column_stack((x, x, x, x, x, x)),
                                  Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5,
                                                     self.last6)),
-                                 env=self.env, win=self.plots[var_name])
+                                 env=self.env, win=self.plots[var_name], opts=dict(legend=self.legend, title=var_name))
 
     def draw(self, var_name, images):
         if var_name not in self.plots:
-            self.plots[var_name] = self.viz.images(images, env=self.env, opts=dict(caption=var_name))
+            self.plots[var_name] = self.viz.images(images, env=self.env, opts=dict(title=var_name))
         else:
-            self.viz.images(images, env=self.env, win=self.plots[var_name], opts=dict(caption=var_name))
+            self.viz.images(images, env=self.env, win=self.plots[var_name], opts=dict(title=var_name))
 
     def draw_figure(self, var_name, fig):
         fig.canvas.draw()
@@ -45,17 +45,15 @@ class Graph:
     def draw_scatter(self, var_name, x, y, legend, marksize=5):
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.scatter(X=x, Y=y.astype(int), env=self.env,
-                                                    opts=dict(legend=legend, marksize=marksize,title=var_name))
+                                                    opts=dict(legend=legend, marksize=marksize, title=var_name))
         else:
             self.viz.scatter(X=x, Y=y.astype(int), win=self.plots[var_name], env=self.env,
                              opts=dict(legend=legend, marksize=marksize, title=var_name))
 
     def heatmap(self, var_name, x, columnnames, rownames):
         if var_name not in self.plots:
-            self.plots[var_name] = self.viz.heatmap(X=np.outer(np.arange(1, 6), np.arange(1, 11)), env=self.env,
-                opts=dict(columnnames=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
-                    rownames=['y1', 'y2', 'y3', 'y4', 'y5'], colormap='Electric', ))
+            self.plots[var_name] = self.viz.heatmap(X=x, env=self.env,
+                opts=dict(columnnames=columnnames, rownames=rownames, title=var_name))
         else:
-            self.viz.heatmap(X=np.outer(np.arange(1, 6), np.arange(1, 11)), env=self.env, win=self.plots[var_name],
-                             opts=dict(columnnames=['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j'],
-                                       rownames=['y1', 'y2', 'y3', 'y4', 'y5'], colormap='Electric', ))
+            self.viz.heatmap(X=x, env=self.env, win=self.plots[var_name],
+                             opts=dict(columnnames=columnnames, rownames=rownames, title=var_name))

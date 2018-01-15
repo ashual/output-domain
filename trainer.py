@@ -60,9 +60,7 @@ if args.cuda:
     model_source.cuda()
     discriminator_model.cuda()
 
-# target_optimizer_encoder_params = [{'params': model_target.fc1.parameters()}, {'params': model_target.fc2.parameters()}]
 target_optimizer = optim.Adam(model_target.parameters(), lr=args.lr)
-# target_optimizer_encoder = optim.Adam(target_optimizer_encoder_params, lr=args.lr)
 source_optimizer = optim.Adam(model_source.parameters(), lr=args.lr)
 d_optimizer = optim.Adam(discriminator_model.parameters(), lr=args.lr)
 
@@ -137,9 +135,10 @@ for epoch in range(1, args.epochs + 1):
         t_loss.backward()
         target_optimizer.step()
 
-        # reset_grads()
+
         # Train Discriminator
         # z_s = z_s.detach()
+        reset_grads()
         _, _, _, z_s = model_source(source_input)
         d_real_decision = discriminator_model(z_s)[:, 0]
         d_real_error = criterion(d_real_decision, ones)  # ones = true
