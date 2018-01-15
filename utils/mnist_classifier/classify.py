@@ -1,5 +1,6 @@
 from __future__ import print_function
 import os
+from copy import deepcopy
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torch
@@ -14,7 +15,7 @@ CPU_FILE = './utils/mnist_classifier/model_cpu.pt'
 
 class ClassifyMNIST:
     def __init__(self, args):
-        self.args = args
+        self.args = deepcopy(args)
         self.args.lr = 0.01
         self.args.momentum = 0.5
         if args.cuda:
