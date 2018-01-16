@@ -35,11 +35,13 @@ class Tests:
             model_target = self.model_source
             model_source = self.model_target
             text = digits_categories
+            suffix = self.target
         else:
             test_loader = self.test_loader_source
             model_source = self.model_source
             model_target = self.model_target
             text = cloths_categories
+            suffix = self.source
         self.model_source.eval()
         for i, (sample, labels) in enumerate(test_loader):
             for idx in range(10):
@@ -48,20 +50,20 @@ class Tests:
                 if len(sample_digit) == 0:
                     continue
                 sample_digit_torch = torch.FloatTensor(sample_digit)
-                sample_digit = Variable(sample_digit_torch)
+                sample_digit = Variable(sample_digit_torch, volatile=True)
                 if self.cuda:
                     sample_digit = sample_digit.cuda()
                 sample_digit = model_source.encoder_only(sample_digit.view(-1, 784))
                 sample_digit_t = model_target.decode(sample_digit).cpu()
                 sample_digit_s = model_source.decode(sample_digit).cpu()
                 concat_data = torch.cat((sample_digit_torch.view(-1, 784), sample_digit_t.data, sample_digit_s.data), 0)
-                self.graph.draw(str(text[idx]), concat_data.view(len(sample_digit) * 3, 1, 28, 28).cpu().numpy())
+                self.graph.draw('{}_{}'.format(text[idx], suffix), concat_data.view(len(sample_digit) * 3, 1, 28, 28).cpu().numpy())
             break
 
     def test_matching(self):
         confusion = torch.zeros(n_categories, n_categories).long().cpu()
         for i, (sample, labels) in enumerate(self.test_loader_source):
-            sample_digit = Variable(sample)
+            sample_digit = Variable(sample, volatile=True)
             if self.cuda:
                 sample_digit = sample_digit.cuda()
             sample_digit = self.model_source.encoder_only(sample_digit.view(-1, 784))
@@ -140,7 +142,7 @@ class Tests:
     def gaussian_input(self):
         self.model_source.eval()
         self.model_target.eval()
-        sample = Variable(torch.randn(64, 40))
+        sample = Variable(torch.randn(64, 40), volatile=True)
         if self.cuda:
             sample = sample.cuda()
         sample_source = self.model_source.decode(sample).cpu()
