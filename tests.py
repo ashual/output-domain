@@ -60,12 +60,12 @@ class Tests:
 
     def test_matching(self):
         confusion = torch.zeros(n_categories, n_categories).long().cpu()
-        for i, (sample, labels) in enumerate(self.test_loader_target):
+        for i, (sample, labels) in enumerate(self.test_loader_source):
             sample_digit = Variable(sample)
             if self.cuda:
                 sample_digit = sample_digit.cuda()
-            sample_digit = self.model_target.encoder_only(sample_digit.view(-1, 784))
-            sample_digit = self.model_source.decode(sample_digit)
+            sample_digit = self.model_source.encoder_only(sample_digit.view(-1, 784))
+            sample_digit = self.model_target.decode(sample_digit)
             results = self.classify_model.test(sample_digit).cpu()
             for index, label in enumerate(labels):
                 confusion[label][results[index]] += 1
