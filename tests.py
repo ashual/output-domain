@@ -101,7 +101,7 @@ class Tests:
         print('====> Epoch: {}, Reconstruction source loss: {:.6f},'
               'Reconstruction target loss: {:.6f}'.format(epoch, source_loss, target_loss))
 
-    def tsne(self):
+    def tsne(self, live=True):
         self.model_source.eval()
         self.model_target.eval()
         all_enc_source = None
@@ -129,15 +129,16 @@ class Tests:
                 all_enc_target = torch.cat([all_enc_target, enc_target], 0)
                 all_s_labels = torch.cat([all_s_labels, s_labels])
                 all_t_labels = torch.cat([all_t_labels, t_labels])
-        x_tsne = run_tsne(all_enc_source.numpy())
-        self.graph.draw_scatter('tsne source', x_tsne, all_s_labels.numpy() + 1, [str(i) for i in range(10)])
-        x_tsne = run_tsne(all_enc_target.numpy())
-        self.graph.draw_scatter('tsne target', x_tsne, all_t_labels.numpy() + 1, [str(i) for i in range(10)])
+        if not live:
+            x_tsne = run_tsne(all_enc_source.numpy())
+            self.graph.draw_scatter('tsne source', x_tsne, all_s_labels.numpy() + 1, [str(i) for i in range(10)])
+            x_tsne = run_tsne(all_enc_target.numpy())
+            self.graph.draw_scatter('tsne target', x_tsne, all_t_labels.numpy() + 1, [str(i) for i in range(10)])
         data_combined = torch.cat([all_enc_source, all_enc_target]).numpy()
         labels_combined = np.concatenate((np.ones(all_enc_source.size()[0]), np.ones(all_enc_target.size()[0]) + 1),
                                          axis=0)
         x_tsne = run_tsne(data_combined)
-        self.graph.draw_scatter('Combined tsne', x_tsne, labels_combined, ['source', 'target'])
+        self.graph.draw_scatter('Combined tsne', x_tsne, labels_combined, ['source', 'target'], markersize=5)
 
     def gaussian_input(self):
         self.model_source.eval()

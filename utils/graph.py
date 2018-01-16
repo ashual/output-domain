@@ -42,13 +42,13 @@ class Graph:
         data = np.moveaxis(data, -1, 0)
         self.draw(var_name, data)
 
-    def draw_scatter(self, var_name, x, y, legend, marksize=5):
+    def draw_scatter(self, var_name, x, y, legend, markersize=5):
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.scatter(X=x, Y=y.astype(int), env=self.env,
-                                                    opts=dict(legend=legend, marksize=marksize, title=var_name))
+                                                    opts=dict(legend=legend, markersize=markersize, title=var_name))
         else:
             self.viz.scatter(X=x, Y=y.astype(int), win=self.plots[var_name], env=self.env,
-                             opts=dict(legend=legend, marksize=marksize, title=var_name))
+                             opts=dict(legend=legend, markersize=markersize, title=var_name))
 
     def heatmap(self, var_name, x, columnnames, rownames):
         if var_name not in self.plots:

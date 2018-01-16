@@ -54,7 +54,7 @@ tests.args.one_sided = not tests.args.one_sided
 tests.source_to_target_test()
 tests.args.one_sided = not tests.args.one_sided
 tests.gaussian_input()
-tests.tsne()
+tests.tsne(live=False)
 tests.reconstruction(0)
 accuracy = tests.test_matching()
 print('Diagonal accuracy is {}'.format(accuracy))
