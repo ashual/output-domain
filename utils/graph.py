@@ -4,29 +4,28 @@ from visdom import Visdom
 
 class Graph:
     def __init__(self, env):
-        self.last1 = 0.
-        self.last2 = 0.
-        self.last3 = 0.
-        self.last4 = 0.
-        self.last5 = 0.
-        self.last6 = 0.
-        self.x = 0.
-        self.legend = ['source_generator', 'target_generator', 'source_disc', 'target_disc', 'disc source',
-                       'disc target']
+        self.points = {}
         self.viz = Visdom()
         self.env = env
         self.plots = {}
 
-    def add_point(self, x, var_name='all'):
-        if var_name not in self.plots or not self.viz.win_exists(self.plots[var_name], env=self.env):
-            self.plots[var_name] = self.viz.line(X=np.column_stack((x, x, x, x, x, x)),
-                Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5, self.last6)),
-                                                 env=self.env, opts=dict(legend=self.legend, title=var_name))
-        else:
-            self.viz.line(update='append', X=np.column_stack((x, x, x, x, x, x)),
-                                 Y=np.column_stack((self.last1, self.last2, self.last3, self.last4, self.last5,
-                                                    self.last6)),
-                                 env=self.env, win=self.plots[var_name], opts=dict(legend=self.legend, title=var_name))
+    def plot_all_points(self, epoch):
+        for var_name, value in self.points.items():
+            value = np.array(value).mean()
+            if var_name not in self.plots or not self.viz.win_exists(self.plots[var_name], env=self.env):
+                self.plots[var_name] = self.viz.line(X=np.array([epoch, epoch]), Y=np.array([value, value]),
+                                                     env=self.env,
+                                                     opts=dict(title=var_name, xlabel='epoch',
+                                                               ylablel='loss'))
+            else:
+                self.viz.line(update='append', X=np.array([epoch]), Y=np.array([value]), env=self.env,
+                              win=self.plots[var_name],
+                              opts=dict(title=var_name, xlabel='epoch', ylablel='loss'))
+
+    def accumulate_point(self, var_name, x):
+        if var_name not in self.points:
+            self.points[var_name] = []
+        self.points[var_name].append(x.data.cpu().mean())
 
     def draw(self, var_name, images):
         if var_name not in self.plots:
@@ -53,7 +52,8 @@ class Graph:
     def heatmap(self, var_name, x, columnnames, rownames):
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.heatmap(X=x, env=self.env,
-                opts=dict(columnnames=columnnames, rownames=rownames, title=var_name))
+                                                    opts=dict(columnnames=columnnames, rownames=rownames,
+                                                              title=var_name))
         else:
             self.viz.heatmap(X=x, env=self.env, win=self.plots[var_name],
                              opts=dict(columnnames=columnnames, rownames=rownames, title=var_name))

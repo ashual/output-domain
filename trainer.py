@@ -149,14 +149,13 @@ for epoch in range(1, args.epochs + 1):
 
         # for p in discriminator_model.parameters():
         #     p.data.clamp_(-0.1, 0.1)
-
-        graph.last1 = s_loss_generator.data[0]
-        graph.last2 = t_loss_generator.data[0]
-        graph.last3 = s_loss_discriminator.data[0]
-        graph.last4 = t_loss_discriminator.data[0]
-        graph.last5 = d_real_error.data[0]
-        graph.last6 = d_fake_error.data[0]
-        graph.add_point(running_counter)
+        graph.accumulate_point('source generator loss', s_loss_generator)
+        graph.accumulate_point('target generator loss', t_loss_generator)
+        graph.accumulate_point('source discriminator loss', s_loss_discriminator)
+        graph.accumulate_point('target discriminator loss', t_loss_discriminator)
+        graph.accumulate_point('discriminator real error', d_real_error)
+        graph.accumulate_point('discriminator fake error', d_fake_error)
+    graph.plot_all_points(epoch)
 
     # ---------- Tests --------------
     tests.source_to_target_test()
