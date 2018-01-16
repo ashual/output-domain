@@ -50,11 +50,12 @@ class Graph:
             self.viz.scatter(X=x, Y=y.astype(int), win=self.plots[var_name], env=self.env,
                              opts=dict(legend=legend, markersize=markersize, title=var_name))
 
-    def heatmap(self, var_name, x, columnnames, rownames):
+    def heatmap(self, var_name, x, columnnames, rownames, title):
+        title = var_name if title is None else title
         if var_name not in self.plots:
             self.plots[var_name] = self.viz.heatmap(X=x, env=self.env,
                                                     opts=dict(columnnames=columnnames, rownames=rownames,
-                                                              title=var_name))
+                                                              title=title))
         else:
             self.viz.heatmap(X=x, env=self.env, win=self.plots[var_name],
-                             opts=dict(columnnames=columnnames, rownames=rownames, title=var_name))
+                             opts=dict(columnnames=columnnames, rownames=rownames, title=title))

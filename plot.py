@@ -47,5 +47,6 @@ def plot_results(confusion, graph, rows_categories, columns_categories):
 
     columns_categories = ['{}*'.format(digit) for digit in columns_categories]
     # Flipping the matrix for visualization
-    graph.heatmap('matching plot', np.flip(sorted_confusion, 0), columns_categories, rows_categories[::-1])
+    title = 'Matching plot ACC - {:.3f}'.format(diagonal/n_categories)
+    graph.heatmap('matching plot', np.flip(sorted_confusion, 0), columns_categories, rows_categories[::-1], title)
     return diagonal / n_categories
