@@ -21,6 +21,7 @@ class Graph:
                 self.viz.line(update='append', X=np.array([epoch]), Y=np.array([value]), env=self.env,
                               win=self.plots[var_name],
                               opts=dict(title=var_name, xlabel='epoch', ylablel='loss'))
+            self.points[var_name] = []
 
     def accumulate_point(self, var_name, x):
         if var_name not in self.points:
