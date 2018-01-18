@@ -1,14 +1,13 @@
 from torch import nn
-from torch.autograd import Variable
 
 
 class VAE(nn.Module):
-    def __init__(self):
+    def __init__(self, channels):
         super(VAE, self).__init__()
 
         self.fc1 = nn.Linear(784, 400)
-        self.fc2 = nn.Linear(400, 40)
-        self.fc3 = nn.Linear(40, 400)
+        self.fc2 = nn.Linear(400, channels)
+        self.fc3 = nn.Linear(channels, 400)
         self.fc4 = nn.Linear(400, 784)
 
         self.relu = nn.ReLU()

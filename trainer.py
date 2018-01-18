@@ -39,7 +39,7 @@ else:
 
 if not (args.resume and os.path.isfile(args.model_source_path)):
     print('Creating new source model')
-    model_source = SourceModel()
+    model_source = SourceModel(args.channels)
     source_resume = False
 else:
     print('Loading source model from {}'.format(args.model_source_path))
@@ -48,12 +48,12 @@ else:
 
 if not (args.resume and os.path.isfile(args.model_target_path)):
     print('Creating new target model')
-    model_target = SourceModel()
+    model_target = SourceModel(args.channels)
 else:
     print('Loading target model from {}'.format(args.model_target_path))
     model_target = torch.load(args.model_target_path)
 
-discriminator_model = Discriminator(20, 20)
+discriminator_model = Discriminator(args.channels, args.n_B, args.n_C)
 
 if args.cuda:
     model_target.cuda()
@@ -162,7 +162,7 @@ for epoch in range(1, args.epochs + 1):
     tests.args.one_sided = not tests.args.one_sided
     tests.source_to_target_test()
     tests.args.one_sided = not tests.args.one_sided
-    tests.gaussian_input()
+    tests.gaussian_input(args.channels)
     tests.tsne()
     tests.reconstruction(epoch)
     accuracy = tests.test_matching()

@@ -5,19 +5,19 @@ import torch.nn.functional as F
 
 class Discriminator(nn.Module):
 
-    def __init__(self, n_B, n_C):
+    def __init__(self, channels, n_B, n_C):
         super(Discriminator, self).__init__()
         self.n_B = n_B
         self.n_C = n_C
-        self.num_channels = 40
+        self.num_channels = channels
 
-        self.fc1 = nn.Linear(40, 128)
-        self.fc2 = nn.Linear(128, 40)
+        self.fc1 = nn.Linear(self.num_channels, 128)
+        self.fc2 = nn.Linear(128, self.num_channels)
 
         T_init = torch.randn(self.num_channels, n_B * n_C) * 0.1
         self.T_tensor = nn.Parameter(T_init, requires_grad=True)
         # self.bn = nn.BatchNorm1d(20 + n_B)
-        self.fc3 = nn.Linear(40 + n_B, 1)
+        self.fc3 = nn.Linear(self.num_channels + n_B, 1)
         self.relu = nn.ReLU()
 
     def forward(self, x):

@@ -25,6 +25,9 @@ def load_arguments():
     parser.add_argument('--h_sld', type=float, default=1, help='hyper parameter source discriminator loss (default: 1)')
     parser.add_argument('--h_ds', type=float, default=1, help='hyper parameter disc from source loss(default: 1)')
     parser.add_argument('--h_dt', type=float, default=1, help='hyper parameter disc from target loss (default: 1)')
+    parser.add_argument('--channels', type=int, default=40, help='')
+    parser.add_argument('--n_B', type=int, default=20, help='')
+    parser.add_argument('--n_C', type=int, default=20, help='')
     args = parser.parse_args()
 
     if not args.graph_name:

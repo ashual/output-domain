@@ -140,10 +140,10 @@ class Tests:
         x_tsne = run_tsne(data_combined)
         self.graph.draw_scatter('Combined tsne', x_tsne, labels_combined, ['source', 'target'], markersize=5)
 
-    def gaussian_input(self):
+    def gaussian_input(self, channels):
         self.model_source.eval()
         self.model_target.eval()
-        sample = Variable(torch.randn(64, 40), volatile=True)
+        sample = Variable(torch.randn(64, channels), volatile=True)
         if self.cuda:
             sample = sample.cuda()
         sample_source = self.model_source.decode(sample).cpu()
